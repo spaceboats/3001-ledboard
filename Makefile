@@ -1,5 +1,5 @@
-CXX=g++
-CXXFLAGS=-Wall -Wunused -Wextra -pedantic -std=c++98 -ansi
+CXX=g++-4.8
+CXXFLAGS=-g -Wall -Wunused -Wextra -pedantic -std=c++11
 MAKE=make
 RGB_INCDIR=matrix/include
 RGB_LIBDIR=matrix/lib
