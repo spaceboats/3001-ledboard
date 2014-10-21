@@ -26,8 +26,10 @@
  */
 
 #include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <thread>
+#include <sys/time.h>
 #include <unistd.h>
 #include "led-matrix.h"
 
@@ -58,6 +60,12 @@ void read_state(board_state_t **state)
     }
 }
 
+unsigned int microsecond_difference(struct timeval start, struct timeval end)
+{
+    int diff = (end.tv_usec - start.tv_usec) / 1000;
+    return diff + (end.tv_sec - start.tv_sec) * 1000;
+}
+
 class Board : public rgb_matrix::RGBMatrix
 {
     private:
@@ -73,8 +81,13 @@ class Board : public rgb_matrix::RGBMatrix
             read_state_thread = new std::thread(read_state, &state);
         }
 
-        bool tick()
+        bool tick(unsigned int &tick_time)
         {
+            struct timeval start, end;
+            bool eof;
+
+            gettimeofday(&start, NULL);
+
             if (state == NULL)
             {
                 Fill(0, 0, 0);
@@ -84,17 +97,25 @@ class Board : public rgb_matrix::RGBMatrix
                 Fill(0, 0, *state);
             }
 
-            if (std::cin.eof())
+            eof = std::cin.eof();
+            if (eof)
             {
                 read_state_thread->join();
             }
 
-            return !std::cin.eof();
+            gettimeofday(&end, NULL);
+
+            tick_time = microsecond_difference(start, end);
+
+            return !eof;
         }
 };
 
 int main()
 {
+    unsigned int tick_time;
+    Board *board;
+
     // set up GPIO pins
     rgb_matrix::GPIO io;
     if (!io.Init())
@@ -103,12 +124,12 @@ int main()
     }
 
     // set up LED matrix
-    Board *board = new Board(&io, BOARD_ROWS, BOARD_CHAIN);
+    board = new Board(&io, BOARD_ROWS, BOARD_CHAIN);
 
     // main loop here: read until stdin is EOF
-    while (board->tick())
+    while (board->tick(tick_time))
     {
-        usleep(TICK_LENGTH);
+        usleep(TICK_LENGTH - tick_time);
     }
 
     // clean up
