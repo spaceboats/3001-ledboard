@@ -65,7 +65,8 @@ void Board::read_state(State **state) {
 Board::Board(rgb_matrix::GPIO *io, int rows = 32, int chained_displays = 1) :
     rgb_matrix::RGBMatrix(io, rows, chained_displays)
 {
-    state = NULL;
+    uint8_t rgb[3] = {0, 0, 0};
+    state = new FillMode(rgb);
 
     read_state_thread = new std::thread(read_state, &state);
 }
