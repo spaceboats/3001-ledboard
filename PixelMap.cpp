@@ -53,9 +53,9 @@ void PixelMap::tick(rgb_matrix::Canvas &canvas)
 {
     for (int x = 0; x < width; x++)
     {
-        for(int y = 0; y < width; y++)
+        for(int y = 0; y < height; y++)
         {
-            int offset = x * width + y;
+            int offset = y * width + x;
             std::cout << "r: " << rgb[offset][0] << "g: " << rgb[offset][1] << "b: " << rgb[offset][2] << "\n";
             canvas.SetPixel(x, y, rgb[offset][0], rgb[offset][1], rgb[offset][2]);
         }
