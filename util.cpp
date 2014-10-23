@@ -49,9 +49,9 @@ bool get_color(rapidjson::Value &value, uint8_t rgb[3])
     /* "a1b2c3" */
     else if (value.IsString())
     {
-        if (((std::string) value.GetString()).length() == 6)
+        if (value.GetStringLength() == 6)
         {
-            std::string hex = "0x" + (std::string) value.GetString();
+            std::string hex = "0x" + std::string(value.GetString(), value.GetStringLength());
             char *p;
             unsigned long int i = strtoul(hex.c_str(), &p, 16);
             if (*p != '\0') return false;
