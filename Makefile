@@ -1,9 +1,9 @@
 CXX=g++-4.8
-CXXFLAGS=-Imatrix/include -g -Wall -Wunused -Wextra -pedantic -std=c++11
+CXXFLAGS=-Imatrix/include -Irapidjson/include -g -Wall -Wunused -Wextra -pedantic -std=c++11
 MAKE=make
 LDFLAGS+=-Lmatrix/lib -lrgbmatrix -lrt -lm -lpthread
 
-OBJS=main.o Fill.o PixelMap.o
+OBJS=main.o util.o Fill.o PixelMap.o
 
 board_controller: $(OBJS) matrix/lib/librgbmatrix.a
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)

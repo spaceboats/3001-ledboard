@@ -29,11 +29,15 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <thread>
+#include <string>
 #include <sys/time.h>
+#include <thread>
 #include <unistd.h>
 #include "led-matrix.h"
+#include "rapidjson/document.h"
+#include "util.h"
 #include "State.h"
+#include "Fill.h"
 
 // number of LED rows on board
 #define BOARD_ROWS 16
@@ -42,21 +46,33 @@
 // length of a tick, in milliseconds
 #define TICK_LENGTH 50
 
-typedef unsigned int board_state_t;
-
-void read_state(board_state_t **state)
+void read_state(State **state)
 {
-    unsigned int x, *ptr;
+    State *ptr;
+    std::string input, mode;
+    rapidjson::Document document;
 
-    while (std::cin >> x)
+    while (!std::cin.eof())
     {
-        if (std::cin.eof())
+        std::getline(std::cin, input);
+
+        /* initial sanity check for the input */
+        document.Parse(input.c_str());
+        if (!print_error(document.IsObject(), "not JSON object")) continue;
+        if (!print_error(document.HasMember("mode"), "missing \"mode\" key")) continue;
+        if (!print_error(document["mode"].IsString(), "\"mode\" value is not string")) continue;
+
+        /* switch on mode */
+        mode = document["mode"].GetString();
+        if (mode.compare("fill") == 0)
         {
-            break;
+            if (!print_error(document.HasMember("color"), "missing \"color\" key")) continue;
+
+            uint8_t rgb[3];
+            if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
+            ptr = new Fill(rgb);
         }
 
-        ptr = new unsigned int;
-        *ptr = x;
         std::swap(*state, ptr);
         delete ptr;
     }
@@ -71,7 +87,7 @@ unsigned int microsecond_difference(struct timeval start, struct timeval end)
 class Board : public rgb_matrix::RGBMatrix
 {
     private:
-        board_state_t *state;
+        State *state;
         std::thread *read_state_thread;
 
     public:
@@ -90,14 +106,7 @@ class Board : public rgb_matrix::RGBMatrix
 
             gettimeofday(&start, NULL);
 
-            if (state == NULL)
-            {
-                Fill(0, 0, 0);
-            }
-            else
-            {
-                Fill(0, 0, *state);
-            }
+            state->tick(*this);
 
             eof = std::cin.eof();
             if (eof)

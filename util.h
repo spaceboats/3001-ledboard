@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 Alex Gustafson
+/* Copyright (c) 2014 Ian Weller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -17,23 +17,14 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- ******************************************************************************
- *
- * Abstract base class for state
- *
  */
 
-#ifndef _STATE_H
-#define _STATE_H
+#ifndef _UTIL_H
+#define _UTIL_H
 
-#include "led-matrix.h"
+#include <string>
 
-class State
-{
-    public:
-        virtual ~State() { };
-        virtual void tick(rgb_matrix::Canvas &canvas) = 0;
-};
+bool print_error(bool assertion, std::string msg);
+bool get_color(rapidjson::Value &value, uint8_t rgb[3]);
 
 #endif
