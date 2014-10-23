@@ -28,16 +28,10 @@
 
 #include <cstdlib>
 #include <ctime>
-#include <iostream>
-#include <string>
-#include <sys/time.h>
-#include <thread>
 #include <unistd.h>
 #include "led-matrix.h"
-#include "rapidjson/document.h"
 #include "util.h"
-#include "State.h"
-#include "Fill.h"
+#include "Board.h"
 
 // number of LED rows on board
 #define BOARD_ROWS 16
@@ -45,82 +39,6 @@
 #define BOARD_CHAIN 3
 // length of a tick, in milliseconds
 #define TICK_LENGTH 50
-
-void read_state(State **state)
-{
-    State *ptr;
-    std::string input, mode;
-    rapidjson::Document document;
-
-    while (!std::cin.eof())
-    {
-        std::getline(std::cin, input);
-
-        /* initial sanity check for the input */
-        document.Parse(input.c_str());
-        if (!print_error(document.IsObject(), "not JSON object")) continue;
-        if (!print_error(document.HasMember("mode"), "missing \"mode\" key")) continue;
-        if (!print_error(document["mode"].IsString(), "\"mode\" value is not string")) continue;
-
-        /* switch on mode */
-        mode = document["mode"].GetString();
-        if (mode.compare("fill") == 0)
-        {
-            if (!print_error(document.HasMember("color"), "missing \"color\" key")) continue;
-
-            uint8_t rgb[3];
-            if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
-            ptr = new Fill(rgb);
-        }
-
-        std::swap(*state, ptr);
-        delete ptr;
-    }
-}
-
-unsigned int microsecond_difference(struct timeval start, struct timeval end)
-{
-    int diff = (end.tv_usec - start.tv_usec) / 1000;
-    return diff + (end.tv_sec - start.tv_sec) * 1000;
-}
-
-class Board : public rgb_matrix::RGBMatrix
-{
-    private:
-        State *state;
-        std::thread *read_state_thread;
-
-    public:
-        Board(rgb_matrix::GPIO *io, int rows = 32, int chained_displays = 1)
-            : rgb_matrix::RGBMatrix(io, rows, chained_displays)
-        {
-            state = NULL;
-
-            read_state_thread = new std::thread(read_state, &state);
-        }
-
-        bool tick(unsigned int &tick_time)
-        {
-            struct timeval start, end;
-            bool eof;
-
-            gettimeofday(&start, NULL);
-
-            state->tick(*this);
-
-            eof = std::cin.eof();
-            if (eof)
-            {
-                read_state_thread->join();
-            }
-
-            gettimeofday(&end, NULL);
-
-            tick_time = microsecond_difference(start, end);
-
-            return !eof;
-        }
-};
 
 int main()
 {

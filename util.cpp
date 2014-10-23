@@ -21,7 +21,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include "rapidjson/document.h"
 #include "util.h"
 
 bool print_error(bool assertion, std::string msg)
@@ -76,4 +75,10 @@ bool get_color(rapidjson::Value &value, uint8_t rgb[3])
     }
 
     return true;
+}
+
+unsigned int microsecond_difference(struct timeval start, struct timeval end)
+{
+    int diff = (end.tv_usec - start.tv_usec) / 1000;
+    return diff + (end.tv_sec - start.tv_sec) * 1000;
 }

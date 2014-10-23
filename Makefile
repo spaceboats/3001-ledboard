@@ -3,7 +3,7 @@ CXXFLAGS=-Imatrix/include -Irapidjson/include -g -Wall -Wunused -Wextra -pedanti
 MAKE=make
 LDFLAGS+=-Lmatrix/lib -lrgbmatrix -lrt -lm -lpthread
 
-OBJS=main.o util.o Fill.o PixelMap.o
+OBJS=main.o util.o Board.o Fill.o PixelMap.o
 
 board_controller: $(OBJS) matrix/lib/librgbmatrix.a
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)

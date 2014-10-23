@@ -1,4 +1,5 @@
 /* Copyright (c) 2014 Ian Weller
+ * Copyright (c) 2014 Alex Gustafson
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,14 +20,25 @@
  * SOFTWARE.
  */
 
-#ifndef _UTIL_H
-#define _UTIL_H
+#ifndef _BOARD_H
+#define _BOARD_H
 
-#include <string>
-#include "rapidjson/document.h"
+#include <thread>
+#include "led-matrix.h"
+#include "State.h"
 
-bool print_error(bool assertion, std::string msg);
-bool get_color(rapidjson::Value &value, uint8_t rgb[3]);
-unsigned int microsecond_difference(struct timeval start, struct timeval end);
+class Board : public rgb_matrix::RGBMatrix
+{
+    private:
+        State *state;
+        std::thread *read_state_thread;
+
+        static void read_state(State **state);
+
+    public:
+        Board(rgb_matrix::GPIO *io, int rows, int chained_displays);
+        bool tick(unsigned int &tick_time);
+};
+
 
 #endif
