@@ -1,15 +1,11 @@
 CXX=g++-4.8
-CXXFLAGS=-I$(RGB_INCDIR) -g -Wall -Wunused -Wextra -pedantic -std=c++11
+CXXFLAGS=-Imatrix/include -g -Wall -Wunused -Wextra -pedantic -std=c++11
 MAKE=make
-RGB_INCDIR=matrix/include
-RGB_LIBDIR=matrix/lib
-RGB_LIBRARY_NAME=rgbmatrix
-RGB_LIBRARY=lib$(RGB_LIBRARY_NAME).a
-LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+LDFLAGS+=-Lmatrix/lib -lrgbmatrix -lrt -lm -lpthread
 
 OBJS=main.o Fill.o PixelMap.o
 
-board_controller: $(OBJS) $(RGB_LIBDIR)/$(RGB_LIBRARY)
+board_controller: $(OBJS) matrix/lib/librgbmatrix.a
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
 
 main.o: main.cpp
@@ -18,11 +14,11 @@ main.o: main.cpp
 %.o: %.cpp %.h
 	$(CXX) -c $(CXXFLAGS) $<
 
-$(RGB_LIBDIR)/$(RGB_LIBRARY):
-	$(MAKE) -C $(RGB_LIBDIR) $(RGB_LIBRARY)
+matrix/lib/librgbmatrix.a:
+	$(MAKE) -C matrix/lib librgbmatrix.a
 
 clean:
 	rm -f board_controller
-	$(MAKE) -C $(RGB_LIBDIR) clean
+	$(MAKE) -C matrix clean
 
 .PHONY: clean
