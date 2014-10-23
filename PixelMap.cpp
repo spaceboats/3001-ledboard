@@ -1,4 +1,5 @@
 /* Copyright (c) 2014 Alex Gustafson
+ * Copyright (c) 2014 Ian Weller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,18 +28,23 @@
 #include "PixelMap.h"
 #include <iostream>
 
-PixelMap::PixelMap(rgb_matrix::Canvas &canvas_in, uint8_t rgb_in[][3])
+PixelMap::PixelMap(rgb_matrix::Canvas &canvas_in, uint8_t rgb_in[][3], unsigned int rgb_length)
 {
     width = canvas_in.width();
     height = canvas_in.height();
     length = width * height;
     rgb = new uint8_t*[length];
-    for (int i = 0; i < length; i++)
+    for (int i = 0; i < std::min(length, rgb_length); i++)
     {
         rgb[i] = new uint8_t[3];
         rgb[i][0] = rgb_in[i][0];
         rgb[i][1] = rgb_in[i][1];
         rgb[i][2] = rgb_in[i][2];
+    }
+    for (int i = std::min(length, rgb_length); i < length; i++)
+    {
+        rgb[i] = new uint8_t[3];
+        rgb[i][0] = rgb[i][1] = rgb[i][2] = 0;
     }
 }
 
