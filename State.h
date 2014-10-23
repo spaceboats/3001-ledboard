@@ -27,9 +27,12 @@
 #ifndef _STATE_H
 #define _STATE_H
 
+#include "led-matrix.h"
+
 class State
 {
-    virtual void tick(rgb_matrix::Canvas) = 0;
+    public:
+        virtual void tick(rgb_matrix::Canvas &canvas) = 0;
 };
 
 #endif
