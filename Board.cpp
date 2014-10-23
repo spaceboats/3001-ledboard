@@ -36,10 +36,8 @@ void Board::read_state(State **state) {
     std::string input, mode;
     rapidjson::Document document;
 
-    while (!std::cin.eof())
+    while (!std::getline(std::cin, input).eof())
     {
-        std::getline(std::cin, input);
-
         /* initial sanity check for the input */
         document.Parse(input.c_str());
         if (!print_error(document.IsObject(), "not JSON object")) continue;
@@ -55,6 +53,11 @@ void Board::read_state(State **state) {
             uint8_t rgb[3];
             if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
             ptr = new FillMode(rgb); // FIXME see typedef at top of Board.cpp
+        }
+        else
+        {
+            print_error(false, "invalid mode \"" + mode + "\"");
+            continue;
         }
 
         std::swap(*state, ptr);
