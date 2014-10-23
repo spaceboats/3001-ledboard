@@ -35,15 +35,14 @@ class PixelMap : public State
 {
     public:
         PixelMap(rgb_matrix::Canvas &canvas, uint8_t rgb[][3], unsigned int rgb_length);
-
         ~PixelMap();
 
         void tick(rgb_matrix::Canvas &canvas);
 
     private:
-        int width;
-        int height;
-        int length;
+        unsigned int width;
+        unsigned int height;
+        unsigned int length;
         uint8_t **rgb;
 };
 

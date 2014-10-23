@@ -34,14 +34,14 @@ PixelMap::PixelMap(rgb_matrix::Canvas &canvas_in, uint8_t rgb_in[][3], unsigned 
     height = canvas_in.height();
     length = width * height;
     rgb = new uint8_t*[length];
-    for (int i = 0; i < std::min(length, rgb_length); i++)
+    for (unsigned int i = 0; i < std::min(length, rgb_length); i++)
     {
         rgb[i] = new uint8_t[3];
         rgb[i][0] = rgb_in[i][0];
         rgb[i][1] = rgb_in[i][1];
         rgb[i][2] = rgb_in[i][2];
     }
-    for (int i = std::min(length, rgb_length); i < length; i++)
+    for (unsigned int i = std::min(length, rgb_length); i < length; i++)
     {
         rgb[i] = new uint8_t[3];
         rgb[i][0] = rgb[i][1] = rgb[i][2] = 0;
@@ -49,7 +49,7 @@ PixelMap::PixelMap(rgb_matrix::Canvas &canvas_in, uint8_t rgb_in[][3], unsigned 
 }
 
 PixelMap::~PixelMap(){
-    for (int i = 0; i < length; i++){
+    for (unsigned int i = 0; i < length; i++){
         delete rgb[i];
     }
     delete rgb;
@@ -57,9 +57,9 @@ PixelMap::~PixelMap(){
 
 void PixelMap::tick(rgb_matrix::Canvas &canvas)
 {
-    for (int x = 0; x < width; x++)
+    for (unsigned int x = 0; x < width; x++)
     {
-        for(int y = 0; y < height; y++)
+        for (unsigned int y = 0; y < height; y++)
         {
             int offset = y * width + x;
             std::cout << "r: " << rgb[offset][0] << "g: " << rgb[offset][1] << "b: " << rgb[offset][2] << "\n";
