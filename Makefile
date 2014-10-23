@@ -7,7 +7,7 @@ RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=lib$(RGB_LIBRARY_NAME).a
 LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
-OBJS=main.o Fill.o
+OBJS=main.o Fill.o PixelMap.o
 
 board_controller: $(OBJS) $(RGB_LIBDIR)/$(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
