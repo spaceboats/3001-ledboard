@@ -27,18 +27,27 @@
 #include "led-matrix.h"
 #include "State.h"
 
+struct read_state_args_t
+{
+    unsigned int width;
+    unsigned int height;
+    State **state;
+};
+
 class Board : public rgb_matrix::RGBMatrix
 {
     private:
         State *state;
         std::thread *read_state_thread;
+        read_state_args_t *read_state_args;
 
-        static void read_state(int width, int height, State **state);
+        static void read_state(read_state_args_t *args);
 
     public:
         Board(rgb_matrix::GPIO *io, int rows, int chained_displays);
+        ~Board();
+
         bool tick(unsigned int &tick_time);
 };
-
 
 #endif

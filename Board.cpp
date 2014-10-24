@@ -32,7 +32,8 @@
 // FIXME Fill is overridden by the Canvas::Fill method within Board
 typedef Fill FillMode;
 
-void Board::read_state(int width, int height, State **state) {
+void Board::read_state(read_state_args_t *args)
+{
     State *ptr;
     std::string input, mode;
     rapidjson::Document document;
@@ -65,7 +66,7 @@ void Board::read_state(int width, int height, State **state) {
             {
                 if (!print_error(get_color(document["data"][i], rgb[i]), "\"data[" + std::to_string(i) + "\" value is invalid")) continue;
             }
-            ptr = new PixelMap(width, height, rgb, (unsigned int) document["data"].Size());
+            ptr = new PixelMap(args->width, args->height, rgb, (unsigned int) document["data"].Size());
             delete[] rgb;
         }
         else
@@ -74,8 +75,7 @@ void Board::read_state(int width, int height, State **state) {
             continue;
         }
 
-        std::swap(*state, ptr);
-        delete ptr;
+        std::swap(*args->state, ptr);
     }
 }
 
@@ -85,7 +85,19 @@ Board::Board(rgb_matrix::GPIO *io, int rows = 32, int chained_displays = 1) :
     color_t rgb = {0, 0, 0};
     state = new FillMode(rgb);
 
-    read_state_thread = new std::thread(read_state, width(), height(), &state);
+    read_state_args = new read_state_args_t;
+    read_state_args->width = width();
+    read_state_args->height = height();
+    read_state_args->state = &state;
+
+    read_state_thread = new std::thread(read_state, read_state_args);
+}
+
+Board::~Board()
+{
+    delete read_state_thread;
+    delete read_state_args;
+    delete state;
 }
 
 bool Board::tick(unsigned int &tick_time)

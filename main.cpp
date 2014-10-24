@@ -58,7 +58,8 @@ int main()
     // main loop here: read until stdin is EOF
     while (board->tick(tick_time))
     {
-        usleep(std::max((unsigned int) 0, TICK_LENGTH - tick_time));
+        if (TICK_LENGTH > tick_time)
+            usleep(std::max((unsigned int) 0, TICK_LENGTH - tick_time));
     }
 
     // clean up
