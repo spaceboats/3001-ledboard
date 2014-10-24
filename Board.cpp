@@ -53,7 +53,7 @@ void Board::read_state(rgb_matrix::Canvas * const canvas, State **state) {
 
             uint8_t rgb[3];
             if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
-            ptr = new FillMode(*canvas, rgb); // FIXME see typedef at top of Board.cpp
+            ptr = new FillMode(rgb); // FIXME see typedef at top of Board.cpp
         }
         else if (mode.compare("pixelmap") == 0)
         {
@@ -84,7 +84,7 @@ Board::Board(rgb_matrix::GPIO *io, int rows = 32, int chained_displays = 1) :
     rgb_matrix::RGBMatrix(io, rows, chained_displays)
 {
     uint8_t rgb[3] = {0, 0, 0};
-    state = new FillMode(*this, rgb);
+    state = new FillMode(rgb);
 
     read_state_thread = new std::thread(read_state, this, &state);
 }

@@ -27,14 +27,20 @@
 
 #include "Fill.h"
 
-Fill::Fill(rgb_matrix::Canvas &canvas, uint8_t rgb[3])
+Fill::Fill(uint8_t rgb_in[3])
 {
-    canvas.Fill(rgb[0], rgb[1], rgb[2]);
+    for (int i = 0; i < 3; i++)
+    {
+        rgb[i] = rgb_in[i];
+    }
+    filled = false;
 }
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 void Fill::tick(rgb_matrix::Canvas &canvas)
 {
-    /* do nothing */
+    if (!filled)
+    {
+        canvas.Fill(rgb[0], rgb[1], rgb[2]);
+        filled = true;
+    }
 }
-#pragma GCC diagnostic pop

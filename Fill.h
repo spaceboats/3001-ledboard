@@ -34,9 +34,13 @@
 class Fill : public State
 {
     public:
-        Fill(rgb_matrix::Canvas &canvas, uint8_t rgb[3]);
+        Fill(uint8_t rgb[3]);
 
         void tick(rgb_matrix::Canvas &canvas);
+
+    private:
+        uint8_t rgb[3];
+        bool filled;
 };
 
 #endif
