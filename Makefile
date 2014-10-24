@@ -18,7 +18,7 @@ matrix/lib/librgbmatrix.a:
 	$(MAKE) -C matrix/lib librgbmatrix.a
 
 clean:
-	rm -f board_controller
+	rm -f board_controller $(OBJS)
 	$(MAKE) -C matrix clean
 
 .PHONY: clean
