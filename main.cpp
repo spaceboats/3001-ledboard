@@ -28,10 +28,15 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
+#include <thread>
 #include <unistd.h>
 #include "led-matrix.h"
+#include "rapidjson/document.h"
 #include "util.h"
-#include "Board.h"
+#include "State.h"
+#include "Fill.h"
+#include "PixelMap.h"
 
 // number of LED rows on board
 #define BOARD_ROWS 16
@@ -40,10 +45,75 @@
 // length of a tick, in microseconds
 #define TICK_LENGTH 50000
 
+struct read_state_args_t
+{
+    unsigned int width;
+    unsigned int height;
+    State **state;
+};
+
+void read_state(read_state_args_t *args)
+{
+    State *ptr;
+    std::string input, mode;
+    rapidjson::Document document;
+
+    while (!std::getline(std::cin, input).eof())
+    {
+        /* initial sanity check for the input */
+        document.Parse(input.c_str());
+        if (!print_error(document.IsObject(), "not JSON object")) continue;
+        if (!print_error(document.HasMember("mode"), "missing \"mode\" key")) continue;
+        if (!print_error(document["mode"].IsString(), "\"mode\" value is not string")) continue;
+
+        /* switch on mode */
+        mode = document["mode"].GetString();
+        if (mode.compare("fill") == 0)
+        {
+            if (!print_error(document.HasMember("color"), "missing \"color\" key")) continue;
+
+            color_t rgb;
+            if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
+            ptr = new Fill(rgb);
+        }
+        else if (mode.compare("pixelmap") == 0)
+        {
+            if (!print_error(document.HasMember("data"), "missing \"data\" key")) continue;
+            if (!print_error(document["data"].IsArray(), "\"data\" value is not array")) continue;
+
+            color_t *rgb = new color_t[document["data"].Size()];
+            for (unsigned int i = 0; i < document["data"].Size(); i++)
+            {
+                if (!print_error(get_color(document["data"][i], rgb[i]), "\"data[" + std::to_string(i) + "\" value is invalid")) continue;
+            }
+            ptr = new PixelMap(args->width, args->height, rgb, (unsigned int) document["data"].Size());
+            delete[] rgb;
+        }
+        else
+        {
+            print_error(false, "invalid mode \"" + mode + "\"");
+            continue;
+        }
+
+        std::swap(*args->state, ptr);
+    }
+}
+
+unsigned int tick(State *state, rgb_matrix::Canvas &canvas)
+{
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    state->tick(canvas);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+    return usec_difference(start, end);
+}
+
 int main()
 {
     unsigned int tick_time;
-    Board *board;
+    State *state;
+    read_state_args_t read_state_args;
+    read_state_args.state = &state;
 
     // set up GPIO pins
     rgb_matrix::GPIO io;
@@ -53,18 +123,25 @@ int main()
     }
 
     // set up LED matrix
-    board = new Board(&io, BOARD_ROWS, BOARD_CHAIN);
+    rgb_matrix::RGBMatrix matrix(&io, BOARD_ROWS, BOARD_CHAIN);
+    read_state_args.width = matrix.width();
+    read_state_args.height = matrix.height();
+
+    color_t rgb = {0, 0, 0};
+    state = new Fill(rgb);
+
+    std::thread(read_state, &read_state_args).detach();
 
     // main loop here: read until stdin is EOF
-    while (board->tick(tick_time))
+    while (!std::cin.eof())
     {
+        tick_time = tick(state, matrix);
         if (TICK_LENGTH > tick_time)
             usleep(std::max((unsigned int) 0, TICK_LENGTH - tick_time));
     }
 
     // clean up
-    board->Clear();
-    delete board;
+    matrix.Clear();
 
     return 0;
 }

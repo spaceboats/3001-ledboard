@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <cstring>
 #include "PixelMap.h"
-#include "Board.h"
 
 PixelMap::PixelMap(unsigned int width, unsigned int height, color_t rgb_in[], unsigned int rgb_length) :
     filled(false)
