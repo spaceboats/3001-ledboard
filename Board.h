@@ -33,7 +33,7 @@ class Board : public rgb_matrix::RGBMatrix
         State *state;
         std::thread *read_state_thread;
 
-        static void read_state(rgb_matrix::Canvas * const canvas, State **state);
+        static void read_state(int width, int height, State **state);
 
     public:
         Board(rgb_matrix::GPIO *io, int rows, int chained_displays);

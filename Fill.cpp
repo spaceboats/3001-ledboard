@@ -27,13 +27,13 @@
 
 #include "Fill.h"
 
-Fill::Fill(uint8_t rgb_in[3])
+Fill::Fill(color_t rgb_in) :
+    filled(false)
 {
     for (int i = 0; i < 3; i++)
     {
         rgb[i] = rgb_in[i];
     }
-    filled = false;
 }
 
 void Fill::tick(rgb_matrix::Canvas &canvas)

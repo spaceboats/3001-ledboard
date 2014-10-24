@@ -22,28 +22,26 @@
  ******************************************************************************
  *
  * State subclass that displays a pixel map
- *
  */
 
 #ifndef _PIXEL_MAP_H
 #define _PIXEL_MAP_H
 
 #include "led-matrix.h"
+#include "util.h"
 #include "State.h"
 
 class PixelMap : public State
 {
     public:
-        PixelMap(rgb_matrix::Canvas &canvas, uint8_t rgb[][3], unsigned int rgb_length);
+        PixelMap(unsigned int width, unsigned int height, color_t rgb[], unsigned int rgb_length);
         ~PixelMap();
 
         void tick(rgb_matrix::Canvas &canvas);
 
     private:
-        unsigned int width;
-        unsigned int height;
-        unsigned int length;
-        uint8_t **rgb;
+        bool filled;
+        color_t *rgb;
 };
 
 #endif

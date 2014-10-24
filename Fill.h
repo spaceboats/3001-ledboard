@@ -29,17 +29,18 @@
 #define _FILL_H
 
 #include "led-matrix.h"
+#include "util.h"
 #include "State.h"
 
 class Fill : public State
 {
     public:
-        Fill(uint8_t rgb[3]);
+        Fill(color_t rgb);
 
         void tick(rgb_matrix::Canvas &canvas);
 
     private:
-        uint8_t rgb[3];
+        color_t rgb;
         bool filled;
 };
 

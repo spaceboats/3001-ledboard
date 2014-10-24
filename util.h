@@ -26,8 +26,10 @@
 #include <time.h>
 #include "rapidjson/document.h"
 
+typedef uint8_t color_t[3];
+
 bool print_error(bool assertion, std::string msg);
-bool get_color(rapidjson::Value &value, uint8_t rgb[3]);
+bool get_color(rapidjson::Value &value, color_t rgb);
 unsigned int usec_difference(struct timespec start, struct timespec end);
 
 #endif

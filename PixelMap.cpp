@@ -25,46 +25,43 @@
  *
  */
 
+#include <algorithm>
+#include <cstring>
 #include "PixelMap.h"
-#include <iostream>
+#include "Board.h"
 
-PixelMap::PixelMap(rgb_matrix::Canvas &canvas_in, uint8_t rgb_in[][3], unsigned int rgb_length)
+PixelMap::PixelMap(unsigned int width, unsigned int height, color_t rgb_in[], unsigned int rgb_length) :
+    filled(false)
 {
-    width = canvas_in.width();
-    height = canvas_in.height();
-    length = width * height;
-    rgb = new uint8_t*[length];
+    unsigned int length = width * height;
+    rgb = new color_t[length];
+
     for (unsigned int i = 0; i < std::min(length, rgb_length); i++)
     {
-        rgb[i] = new uint8_t[3];
-        rgb[i][0] = rgb_in[i][0];
-        rgb[i][1] = rgb_in[i][1];
-        rgb[i][2] = rgb_in[i][2];
+        memcpy(rgb[i], rgb_in[i], sizeof(color_t));
     }
     for (unsigned int i = std::min(length, rgb_length); i < length; i++)
     {
-        rgb[i] = new uint8_t[3];
-        rgb[i][0] = 0;
-        rgb[i][1] = 0;
-        rgb[i][2] = 0;
+        memset(rgb[i], 0, sizeof(color_t));
     }
 }
 
-PixelMap::~PixelMap(){
-    for (unsigned int i = 0; i < length; i++){
-        delete rgb[i];
-    }
-    delete rgb;
+PixelMap::~PixelMap() {
+    delete[] rgb;
 }
 
 void PixelMap::tick(rgb_matrix::Canvas &canvas)
 {
-    for (unsigned int x = 0; x < width; x++)
+    if (!filled)
     {
-        for (unsigned int y = 0; y < height; y++)
+        for (int x = 0; x < canvas.width(); x++)
         {
-            int offset = y * width + x;
-            canvas.SetPixel(x, y, rgb[offset][0], rgb[offset][1], rgb[offset][2]);
+            for (int y = 0; y < canvas.height(); y++)
+            {
+                unsigned int offset = y * canvas.width() + x;
+                canvas.SetPixel(x, y, rgb[offset][0], rgb[offset][1], rgb[offset][2]);
+            }
         }
+        filled = true;
     }
 }

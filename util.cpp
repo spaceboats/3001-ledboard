@@ -33,7 +33,7 @@ bool print_error(bool assertion, std::string msg)
     return assertion;
 }
 
-bool get_color(rapidjson::Value &value, uint8_t rgb[3])
+bool get_color(rapidjson::Value &value, color_t rgb)
 {
     /* [255, 255, 255] */
     if (value.IsArray())
