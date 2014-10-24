@@ -26,6 +26,8 @@
 
 Conway::Conway(unsigned int width, unsigned int height, const color_t rgb_in, int tick_interval_in)
 {
+    this->width = width;
+    this->height = height;
     for (int i = 0; i < 3; i++)
     {
         rgb[i] = rgb_in[i];
@@ -57,9 +59,9 @@ void Conway::tick(rgb_matrix::Canvas &canvas)
     {
         unsigned int neighbors;
 
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < canvas.width(); x++)
         {
-            for (int y = 0; y < width; y++)
+            for (int y = 0; y < canvas.height(); y++)
             {
                 int i = pos(x, y);
 

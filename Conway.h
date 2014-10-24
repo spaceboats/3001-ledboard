@@ -35,7 +35,7 @@ class Conway : public State
         void tick(rgb_matrix::Canvas &canvas);
 
     private:
-        int height, width, ticks, tick_interval;
+        int width, height, ticks, tick_interval;
         bool *cur;
         bool *next;
         uint8_t rgb[3];

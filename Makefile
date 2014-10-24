@@ -1,5 +1,5 @@
 CXX=g++-4.8
-CXXFLAGS=-Imatrix/include -Irapidjson/include -g -Wall -Wunused -Wextra -pedantic -std=c++11
+CXXFLAGS=-Imatrix/include -Irapidjson/include -g -gdwarf-2 -Wall -Wunused -Wextra -pedantic -std=c++11
 MAKE=make
 LDFLAGS+=-Lmatrix/lib -lrgbmatrix -lrt -lm -lpthread
 
