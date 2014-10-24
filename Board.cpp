@@ -27,11 +27,12 @@
 #include "util.h"
 #include "Board.h"
 #include "Fill.h"
+#include "PixelMap.h"
 
 // FIXME Fill is overridden by the Canvas::Fill method within Board
 typedef Fill FillMode;
 
-void Board::read_state(State **state) {
+void Board::read_state(rgb_matrix::Canvas * const canvas, State **state) {
     State *ptr;
     std::string input, mode;
     rapidjson::Document document;
@@ -54,6 +55,20 @@ void Board::read_state(State **state) {
             if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
             ptr = new FillMode(rgb); // FIXME see typedef at top of Board.cpp
         }
+        else if (mode.compare("pixelmap") == 0)
+        {
+            if (!print_error(document.HasMember("data"), "missing \"data\" key")) continue;
+            if (!print_error(document["data"].IsArray(), "\"data\" value is not array")) continue;
+
+            typedef uint8_t color_t[3];
+            color_t *rgb = new color_t[document["data"].Size()];
+            for (unsigned int i = 0; i < document["data"].Size(); i++)
+            {
+                if (!print_error(get_color(document["data"][i], rgb[i]), "\"data[" + std::to_string(i) + "\" value is invalid")) continue;
+            }
+            ptr = new PixelMap(*canvas, rgb, (unsigned int) document["data"].Size());
+            delete[] rgb;
+        }
         else
         {
             print_error(false, "invalid mode \"" + mode + "\"");
@@ -71,7 +86,7 @@ Board::Board(rgb_matrix::GPIO *io, int rows = 32, int chained_displays = 1) :
     uint8_t rgb[3] = {0, 0, 0};
     state = new FillMode(rgb);
 
-    read_state_thread = new std::thread(read_state, &state);
+    read_state_thread = new std::thread(read_state, this, &state);
 }
 
 bool Board::tick(unsigned int &tick_time)

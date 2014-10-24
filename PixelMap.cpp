@@ -44,7 +44,9 @@ PixelMap::PixelMap(rgb_matrix::Canvas &canvas_in, uint8_t rgb_in[][3], unsigned 
     for (unsigned int i = std::min(length, rgb_length); i < length; i++)
     {
         rgb[i] = new uint8_t[3];
-        rgb[i][0] = rgb[i][1] = rgb[i][2] = 0;
+        rgb[i][0] = 0;
+        rgb[i][1] = 0;
+        rgb[i][2] = 0;
     }
 }
 
@@ -62,7 +64,6 @@ void PixelMap::tick(rgb_matrix::Canvas &canvas)
         for (unsigned int y = 0; y < height; y++)
         {
             int offset = y * width + x;
-            std::cout << "r: " << rgb[offset][0] << "g: " << rgb[offset][1] << "b: " << rgb[offset][2] << "\n";
             canvas.SetPixel(x, y, rgb[offset][0], rgb[offset][1], rgb[offset][2]);
         }
     }
