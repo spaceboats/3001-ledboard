@@ -38,6 +38,7 @@
 #include "State.h"
 #include "Fill.h"
 #include "PixelMap.h"
+#include "Conway.h"
 
 // number of LED rows on board
 #define BOARD_ROWS 16
@@ -90,6 +91,21 @@ void read_state(read_state_args_t *args)
             }
             ptr = new PixelMap(args->width, args->height, rgb, (unsigned int) document["data"].Size());
             delete[] rgb;
+        }
+        else if (mode.compare("conway") == 0)
+        {
+            color_t rgb = {255, 0, 0};
+            unsigned int interval = 200000;
+
+            if (document.HasMember("color"))
+                if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
+            if (document.HasMember("interval"))
+            {
+                if (!print_error(document["interval"].IsUint(), "\"interval\" value is invalid")) continue;
+                interval = document["interval"].GetUint() * 1000;
+            }
+
+            ptr = new Conway(args->width, args->height, rgb, interval / TICK_LENGTH);
         }
         else
         {
