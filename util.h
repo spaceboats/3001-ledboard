@@ -23,10 +23,11 @@
 #define _UTIL_H
 
 #include <string>
+#include <time.h>
 #include "rapidjson/document.h"
 
 bool print_error(bool assertion, std::string msg);
 bool get_color(rapidjson::Value &value, uint8_t rgb[3]);
-unsigned int microsecond_difference(struct timeval start, struct timeval end);
+unsigned int usec_difference(struct timespec start, struct timespec end);
 
 #endif

@@ -77,8 +77,8 @@ bool get_color(rapidjson::Value &value, uint8_t rgb[3])
     return true;
 }
 
-unsigned int microsecond_difference(struct timeval start, struct timeval end)
+unsigned int usec_difference(struct timespec start, struct timespec end)
 {
-    int diff = (end.tv_usec - start.tv_usec) / 1000;
-    return diff + (end.tv_sec - start.tv_sec) * 1000;
+    int diff = (end.tv_nsec - start.tv_nsec) / 1000;
+    return diff + ((end.tv_sec - start.tv_sec) * 1e6);
 }

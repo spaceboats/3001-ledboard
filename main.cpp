@@ -37,8 +37,8 @@
 #define BOARD_ROWS 16
 // how many boards are chained together
 #define BOARD_CHAIN 3
-// length of a tick, in milliseconds
-#define TICK_LENGTH 50
+// length of a tick, in microseconds
+#define TICK_LENGTH 50000
 
 int main()
 {
@@ -58,7 +58,7 @@ int main()
     // main loop here: read until stdin is EOF
     while (board->tick(tick_time))
     {
-        usleep(TICK_LENGTH - tick_time);
+        usleep(std::max((unsigned int) 0, TICK_LENGTH - tick_time));
     }
 
     // clean up

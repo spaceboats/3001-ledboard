@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <string>
-#include <sys/time.h>
+#include <time.h>
 #include "rapidjson/document.h"
 #include "util.h"
 #include "Board.h"
@@ -76,10 +76,10 @@ Board::Board(rgb_matrix::GPIO *io, int rows = 32, int chained_displays = 1) :
 
 bool Board::tick(unsigned int &tick_time)
 {
-    struct timeval start, end;
+    struct timespec start, end;
     bool eof;
 
-    gettimeofday(&start, NULL);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
     state->tick(*this);
 
@@ -89,9 +89,9 @@ bool Board::tick(unsigned int &tick_time)
         read_state_thread->join();
     }
 
-    gettimeofday(&end, NULL);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
-    tick_time = microsecond_difference(start, end);
+    tick_time = usec_difference(start, end);
 
     return !eof;
 }
