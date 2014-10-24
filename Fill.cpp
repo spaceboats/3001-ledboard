@@ -1,4 +1,5 @@
 /* Copyright (c) 2014 Alex Gustafson
+ * Copyright (c) 2014 Ian Weller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,9 +33,14 @@ Fill::Fill(uint8_t rgb_in[3])
     {
         rgb[i] = rgb_in[i];
     }
+    filled = false;
 }
 
 void Fill::tick(rgb_matrix::Canvas &canvas)
 {
-    canvas.Fill(rgb[0], rgb[1], rgb[2]);
+    if (!filled)
+    {
+        canvas.Fill(rgb[0], rgb[1], rgb[2]);
+        filled = true;
+    }
 }

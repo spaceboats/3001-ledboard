@@ -1,4 +1,5 @@
 /* Copyright (c) 2014 Alex Gustafson
+ * Copyright (c) 2014 Ian Weller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +40,7 @@ class Fill : public State
 
     private:
         uint8_t rgb[3];
+        bool filled;
 };
 
 #endif
