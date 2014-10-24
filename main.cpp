@@ -29,6 +29,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <list>
 #include <thread>
 #include <unistd.h>
 #include "led-matrix.h"
@@ -50,6 +51,7 @@ struct read_state_args_t
     unsigned int width;
     unsigned int height;
     State **state;
+    std::list<State *> garbage;
 };
 
 void read_state(read_state_args_t *args)
@@ -96,14 +98,20 @@ void read_state(read_state_args_t *args)
         }
 
         std::swap(*args->state, ptr);
+        args->garbage.push_back(ptr);
     }
 }
 
-unsigned int tick(State *state, rgb_matrix::Canvas &canvas)
+unsigned int tick(State *state, rgb_matrix::Canvas &canvas, std::list<State *> &garbage)
 {
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     state->tick(canvas);
+    while (!garbage.empty())
+    {
+        delete garbage.front();
+        garbage.pop_front();
+    }
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
     return usec_difference(start, end);
 }
@@ -135,7 +143,7 @@ int main()
     // main loop here: read until stdin is EOF
     while (!std::cin.eof())
     {
-        tick_time = tick(state, matrix);
+        tick_time = tick(state, matrix, read_state_args.garbage);
         if (TICK_LENGTH > tick_time)
             usleep(std::max((unsigned int) 0, TICK_LENGTH - tick_time));
     }
