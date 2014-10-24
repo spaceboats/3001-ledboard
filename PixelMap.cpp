@@ -28,27 +28,43 @@
 #include "PixelMap.h"
 #include <iostream>
 
-PixelMap::PixelMap(rgb_matrix::Canvas &canvas, uint8_t rgb[][3], unsigned int rgb_length)
+PixelMap::PixelMap(rgb_matrix::Canvas &canvas_in, uint8_t rgb_in[][3], unsigned int rgb_length)
 {
-    for (int x = 0; x < canvas.width(); x++)
+    width = canvas_in.width();
+    height = canvas_in.height();
+    length = width * height;
+    rgb = new uint8_t*[length];
+    for (unsigned int i = 0; i < std::min(length, rgb_length); i++)
     {
-        for (int y = 0; y < canvas.height(); y++)
-        {
-            unsigned int offset = y * canvas.width() + x;
-            if (offset >= rgb_length)
-            {
-                canvas.SetPixel(x, y, 0, 0, 0);
-            }
-            else
-            {
-                canvas.SetPixel(x, y, rgb[offset][0], rgb[offset][1], rgb[offset][2]);
-            }
-        }
+        rgb[i] = new uint8_t[3];
+        rgb[i][0] = rgb_in[i][0];
+        rgb[i][1] = rgb_in[i][1];
+        rgb[i][2] = rgb_in[i][2];
+    }
+    for (unsigned int i = std::min(length, rgb_length); i < length; i++)
+    {
+        rgb[i] = new uint8_t[3];
+        rgb[i][0] = 0;
+        rgb[i][1] = 0;
+        rgb[i][2] = 0;
     }
 }
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+PixelMap::~PixelMap(){
+    for (unsigned int i = 0; i < length; i++){
+        delete rgb[i];
+    }
+    delete rgb;
+}
+
 void PixelMap::tick(rgb_matrix::Canvas &canvas)
 {
+    for (unsigned int x = 0; x < width; x++)
+    {
+        for (unsigned int y = 0; y < height; y++)
+        {
+            int offset = y * width + x;
+            canvas.SetPixel(x, y, rgb[offset][0], rgb[offset][1], rgb[offset][2]);
+        }
+    }
 }
-#pragma GCC diagnostic pop
