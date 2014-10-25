@@ -1,9 +1,15 @@
 CXX=g++-4.8
-CXXFLAGS=-Imatrix/include -Irapidjson/include -g -gdwarf-2 -Wall -Wunused -Wextra -pedantic -std=c++11
+override CXXFLAGS+=-Imatrix/include -Irapidjson/include -g -gdwarf-2 -Wall -Wunused -Wextra -pedantic -std=c++11
 MAKE=make
 LDFLAGS+=-Lmatrix/lib -lrgbmatrix -lrt -lm -lpthread
 
-OBJS=main.o util.o Fill.o PixelMap.o Conway.o
+ifneq (,$(findstring -DEMULATE_LEDBOARD,$(CXXFLAGS)))
+LDFLAGS+=-lSDL
+endif
+
+unexport CXXFLAGS
+
+OBJS=main.o util.o Emulator.o Fill.o PixelMap.o Conway.o
 
 board_controller: $(OBJS) matrix/lib/librgbmatrix.a
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)

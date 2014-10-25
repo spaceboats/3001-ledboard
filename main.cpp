@@ -35,6 +35,7 @@
 #include "led-matrix.h"
 #include "rapidjson/document.h"
 #include "util.h"
+#include "Emulator.h"
 #include "State.h"
 #include "Fill.h"
 #include "PixelMap.h"
@@ -139,15 +140,21 @@ int main()
     read_state_args_t read_state_args;
     read_state_args.state = &state;
 
+#ifndef EMULATE_LEDBOARD
     // set up GPIO pins
     rgb_matrix::GPIO io;
     if (!io.Init())
     {
         return 1;
     }
+#endif // !EMULATE_LEDBORAD
 
     // set up LED matrix
+#ifdef EMULATE_LEDBOARD
+    Emulator matrix(BOARD_CHAIN * 32, BOARD_ROWS);
+#else
     rgb_matrix::RGBMatrix matrix(&io, BOARD_ROWS, BOARD_CHAIN);
+#endif // EMULATE_LEDBOARD
     read_state_args.width = matrix.width();
     read_state_args.height = matrix.height();
 
