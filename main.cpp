@@ -176,6 +176,7 @@ int main()
 
     // clean up
     matrix.Clear();
+    delete state;
 
     return 0;
 }
