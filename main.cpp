@@ -140,6 +140,9 @@ int main()
     read_state_args_t read_state_args;
     read_state_args.state = &state;
 
+    // seed RNG
+    srand(time(NULL));
+
 #ifndef EMULATE_LEDBOARD
     // set up GPIO pins
     rgb_matrix::GPIO io;
