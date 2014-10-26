@@ -1,6 +1,4 @@
-CXX=g++-4.8
 override CXXFLAGS+=-Imatrix/include -Irapidjson/include -g -gdwarf-2 -Wall -Wunused -Wextra -pedantic -std=c++11
-MAKE=make
 LDFLAGS+=-Lmatrix/lib -lrgbmatrix -lrt -lm -lpthread
 
 ifneq (,$(findstring -DEMULATE_LEDBOARD,$(CXXFLAGS)))
@@ -24,10 +22,10 @@ lodepng.o: lodepng/lodepng.cpp lodepng/lodepng.h
 	$(CXX) -c $(CXXFLAGS) $<
 
 matrix/lib/librgbmatrix.a:
-	$(MAKE) -C matrix/lib librgbmatrix.a
+	make -C matrix/lib librgbmatrix.a
 
 clean:
 	rm -f board_controller $(OBJS)
-	$(MAKE) -C matrix clean
+	make -C matrix clean
 
 .PHONY: clean
