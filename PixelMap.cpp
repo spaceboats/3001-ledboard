@@ -29,20 +29,17 @@
 #include <cstring>
 #include "PixelMap.h"
 
-PixelMap::PixelMap(unsigned int width, unsigned int height, color_t rgb_in[], unsigned int rgb_length) :
-    filled(false)
+PixelMap::PixelMap(unsigned int rgb_width_in, unsigned int rgb_height_in,
+        const color_t rgb_in[], const scroll_args_t scroll_args_in) :
+    filled(false), scrolling(true), offset(0), ticks(0),
+    rgb_width(rgb_width_in), rgb_height(rgb_height_in)
 {
-    unsigned int length = width * height;
+    unsigned int length = rgb_width * rgb_height;
     rgb = new color_t[length];
-
-    for (unsigned int i = 0; i < std::min(length, rgb_length); i++)
-    {
-        memcpy(rgb[i], rgb_in[i], sizeof(color_t));
-    }
-    for (unsigned int i = std::min(length, rgb_length); i < length; i++)
-    {
-        memset(rgb[i], 0, sizeof(color_t));
-    }
+    memcpy(rgb, rgb_in, sizeof(color_t) * rgb_width * rgb_height);
+    copy_scroll_args(scroll_args, scroll_args_in);
+    tick_interval = ms_to_ticks(scroll_args.interval);
+    tick_wait = ms_to_ticks(scroll_args.wait);
 }
 
 PixelMap::~PixelMap() {
@@ -51,16 +48,54 @@ PixelMap::~PixelMap() {
 
 void PixelMap::tick(rgb_matrix::Canvas &canvas)
 {
-    if (!filled)
+    if ((scroll_args.dir == SCROLL_NONE && !filled) || (scroll_args.dir != SCROLL_NONE && scrolling))
     {
-        for (int x = 0; x < canvas.width(); x++)
+        if (scroll_args.dir == SCROLL_NONE || ++ticks >= tick_interval || !filled)
         {
-            for (int y = 0; y < canvas.height(); y++)
+            ticks = 0;
+
+            unsigned int xpos, ypos;
+
+            for (int x = 0; x < canvas.width(); x++)
             {
-                unsigned int offset = y * canvas.width() + x;
-                canvas.SetPixel(x, y, rgb[offset][0], rgb[offset][1], rgb[offset][2]);
+                xpos = (scroll_args.dir == SCROLL_HORIZONTAL) ? (x + offset) % (rgb_width + scroll_args.padding) : x;
+
+                for (int y = 0; y < canvas.height(); y++)
+                {
+                    ypos = (scroll_args.dir == SCROLL_VERTICAL) ? (y + offset) % (rgb_height + scroll_args.padding) : y;
+
+                    if ((scroll_args.dir == SCROLL_HORIZONTAL && xpos >= (rgb_width)) ||
+                            (scroll_args.dir == SCROLL_VERTICAL && ypos >= (rgb_height)))
+                        canvas.SetPixel(x, y,
+                                scroll_args.padding_color[0],
+                                scroll_args.padding_color[1],
+                                scroll_args.padding_color[2]);
+                    else if (xpos >= rgb_width || ypos >= rgb_height)
+                        canvas.SetPixel(x, y, 0, 0, 0);
+                    else
+                    {
+                        unsigned int pos = ypos * rgb_width + xpos;
+                        canvas.SetPixel(x, y, rgb[pos][0], rgb[pos][1], rgb[pos][2]);
+                    }
+                }
             }
+
+            filled = true;
+            if (scroll_args.dir != SCROLL_NONE)
+                if (++offset >= ((scroll_args.dir == SCROLL_HORIZONTAL ? rgb_width : rgb_height) + scroll_args.padding))
+                {
+                    offset = 0;
+                    if (tick_wait > 0)
+                        scrolling = false;
+                }
         }
-        filled = true;
+    }
+    else if (scroll_args.dir != SCROLL_NONE && !scrolling)
+    {
+        if (++ticks >= tick_wait)
+        {
+            ticks = 0;
+            scrolling = true;
+        }
     }
 }

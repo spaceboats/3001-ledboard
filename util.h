@@ -27,8 +27,29 @@
 #include <vector>
 #include "rapidjson/document.h"
 
+// number of LED rows on board
+#define BOARD_ROWS 16
+// how many boards are chained together
+#define BOARD_CHAIN 3
+// length of a tick, in microseconds
+#define TICK_LENGTH 50000
+
 typedef uint8_t color_t[3];
 typedef uint8_t color_alpha_t[4];
+
+enum ScrollDirection {
+    SCROLL_HORIZONTAL,
+    SCROLL_VERTICAL,
+    SCROLL_NONE
+};
+
+struct scroll_args_t {
+    ScrollDirection dir;
+    unsigned int padding;
+    color_t padding_color;
+    unsigned int interval;
+    unsigned int wait;
+};
 
 bool print_error(bool assertion, std::string msg);
 bool get_color(rapidjson::Value &value, color_t rgb);
@@ -36,5 +57,8 @@ unsigned int usec_difference(struct timespec start, struct timespec end);
 int b64_octet(const char in[4], unsigned char out[3]);
 std::vector<unsigned char> *b64_decode(const std::string b64);
 void apply_alpha(const color_alpha_t in, color_t out, const color_t background);
+bool get_scroll_args(rapidjson::Document &document, scroll_args_t &scroll_args);
+void copy_scroll_args(scroll_args_t &dest, const scroll_args_t src);
+unsigned int ms_to_ticks(unsigned int ms);
 
 #endif

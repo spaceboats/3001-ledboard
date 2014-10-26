@@ -21,6 +21,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <map>
 #include "util.h"
 
 bool print_error(bool assertion, std::string msg)
@@ -169,4 +170,64 @@ void apply_alpha(const color_alpha_t in, color_t out, const color_t background)
     {
         out[i] = ((double) in[i]) * alpha + ((double) background[i]) * (1.0 - alpha);
     }
+}
+
+bool get_scroll_args(rapidjson::Document &document, scroll_args_t &scroll_args)
+{
+    scroll_args.dir = SCROLL_NONE;
+    scroll_args.padding = 16;
+    memset(scroll_args.padding_color, 0, sizeof(color_t));
+    scroll_args.interval = 0;
+    scroll_args.wait = 0;
+
+    std::map<std::string, unsigned int *> uint_args_map;
+    uint_args_map["scroll_padding"] = &scroll_args.padding;
+    uint_args_map["scroll_interval"] = &scroll_args.interval;
+    uint_args_map["scroll_wait"] = &scroll_args.wait;
+
+    for (std::map<std::string, unsigned int *>::iterator it = uint_args_map.begin(); it != uint_args_map.end(); ++it)
+    {
+        std::string key = it->first;
+        unsigned int *value = it->second;
+
+        if (document.HasMember(key.c_str()))
+        {
+            if (!print_error(document[key.c_str()].IsUint(), "\"" + key + "\" value is not unsigned integer")) return false;
+            *value = document[key.c_str()].GetUint();
+        }
+    }
+
+    if (document.HasMember("scroll_dir"))
+    {
+        if (!print_error(document["scroll_dir"].IsString(), "\"scroll_dir\" value is not string")) return false;
+        std::string dir = document["scroll_dir"].GetString();
+        if (dir.compare("horizontal") == 0)
+            scroll_args.dir = SCROLL_HORIZONTAL;
+        else if (dir.compare("vertical") == 0)
+            scroll_args.dir = SCROLL_VERTICAL;
+        else
+        {
+            print_error(false, "invalid scroll_dir \"" + dir + "\"");
+            return false;
+        }
+    }
+
+    if (document.HasMember("scroll_padding_color"))
+        if (!print_error(get_color(document["scroll_padding_color"], scroll_args.padding_color), "\"color\" value is invalid")) return false;
+
+    return true;
+}
+
+void copy_scroll_args(scroll_args_t &dest, const scroll_args_t src)
+{
+    dest.dir = src.dir;
+    dest.padding = src.padding;
+    memcpy(dest.padding_color, src.padding_color, sizeof(color_t));
+    dest.interval = src.interval;
+    dest.wait = src.wait;
+}
+
+unsigned int ms_to_ticks(unsigned int ms)
+{
+    return ms / TICK_LENGTH;
 }

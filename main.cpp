@@ -42,13 +42,6 @@
 #include "PixelMap.h"
 #include "Conway.h"
 
-// number of LED rows on board
-#define BOARD_ROWS 16
-// how many boards are chained together
-#define BOARD_CHAIN 3
-// length of a tick, in microseconds
-#define TICK_LENGTH 50000
-
 struct read_state_args_t
 {
     unsigned int width;
@@ -83,19 +76,41 @@ void read_state(read_state_args_t *args)
         }
         else if (mode.compare("pixelmap") == 0)
         {
+            unsigned int width = args->width;
+            unsigned int height = args->height;
+            scroll_args_t scroll_args;
+
             if (!print_error(document.HasMember("data"), "missing \"data\" key")) continue;
             if (!print_error(document["data"].IsArray(), "\"data\" value is not array")) continue;
 
-            color_t *rgb = new color_t[document["data"].Size()];
-            for (unsigned int i = 0; i < document["data"].Size(); i++)
+            color_t *rgb = new color_t[width * height];
+            memset(rgb, 0, sizeof(color_t) * width * height);
+
+            for (unsigned int i = 0; i < std::min(document["data"].Size(), width * height); i++)
             {
                 if (!print_error(get_color(document["data"][i], rgb[i]), "\"data[" + std::to_string(i) + "\" value is invalid")) continue;
             }
-            ptr = new PixelMap(args->width, args->height, rgb, (unsigned int) document["data"].Size());
+
+            if (document.HasMember("width"))
+            {
+                if (!print_error(document["width"].IsUint(), "\"width\" value is invalid")) continue;
+                width = document["width"].GetUint();
+            }
+            if (document.HasMember("height"))
+            {
+                if (!print_error(document["height"].IsUint(), "\"height\" value is invalid")) continue;
+                width = document["height"].GetUint();
+            }
+
+            if (!get_scroll_args(document, scroll_args)) continue;
+
+            ptr = new PixelMap(width, height, rgb, scroll_args);
             delete[] rgb;
         }
         else if (mode.compare("png") == 0)
         {
+            scroll_args_t scroll_args;
+
             if (!print_error(document.HasMember("data"), "missing \"data\" key")) continue;
             if (!print_error(document["data"].IsString(), "\"data\" value is not string")) continue;
 
@@ -110,8 +125,10 @@ void read_state(read_state_args_t *args)
             if (!print_error(!error, std::string("\"data\" decoded is not valid PNG: ") + lodepng_error_text(error))) continue;
             delete png;
 
+            if (!get_scroll_args(document, scroll_args)) continue;
+
             color_alpha_t rgba;
-            color_t *rgb = new color_t[rgba_vec.size() / 4];
+            color_t *rgb = new color_t[width * height];
             color_t background;
             if (png_state.info_png.background_defined)
             {
@@ -124,14 +141,14 @@ void read_state(read_state_args_t *args)
                 memset(background, 0, sizeof(color_t));
             }
 
-            for (unsigned int i = 0; i < rgba_vec.size() / 4; i++)
+            for (unsigned int i = 0; i < width * height; i++)
             {
                 for (unsigned int j = 0; j < 4; j++)
                     rgba[j] = rgba_vec[(i * 4) + j];
                 apply_alpha(rgba, rgb[i], background);
             }
 
-            ptr = new PixelMap(width, height, rgb, rgba_vec.size() / 4);
+            ptr = new PixelMap(width, height, rgb, scroll_args);
             delete[] rgb;
         }
         else if (mode.compare("conway") == 0)

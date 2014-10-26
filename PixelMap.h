@@ -34,13 +34,16 @@
 class PixelMap : public State
 {
     public:
-        PixelMap(unsigned int width, unsigned int height, color_t rgb[], unsigned int rgb_length);
+        PixelMap(unsigned int rgb_width, unsigned int rgb_height,
+                const color_t rgb[], const scroll_args_t scroll_args);
         ~PixelMap();
 
         void tick(rgb_matrix::Canvas &canvas);
 
     private:
-        bool filled;
+        bool filled, scrolling;
+        scroll_args_t scroll_args;
+        unsigned int offset, ticks, rgb_width, rgb_height, tick_interval, tick_wait;
         color_t *rgb;
 };
 
