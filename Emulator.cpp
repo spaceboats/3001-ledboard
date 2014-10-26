@@ -28,7 +28,7 @@ Emulator::Emulator(int width, int height) :
 {
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_SetVideoMode(_width * PIXELS_PER_UNIT, _height * PIXELS_PER_UNIT,
-            8, SDL_HWSURFACE);
+            24, SDL_HWSURFACE);
     SDL_WM_SetCaption("board_controller emulator", 0);
 }
 
