@@ -24,6 +24,7 @@
 
 #include <string>
 #include <time.h>
+#include <vector>
 #include "rapidjson/document.h"
 
 typedef uint8_t color_t[3];
@@ -31,5 +32,7 @@ typedef uint8_t color_t[3];
 bool print_error(bool assertion, std::string msg);
 bool get_color(rapidjson::Value &value, color_t rgb);
 unsigned int usec_difference(struct timespec start, struct timespec end);
+int b64_octet(const char in[4], unsigned char out[3]);
+std::vector<unsigned char> *b64_decode(const std::string b64);
 
 #endif

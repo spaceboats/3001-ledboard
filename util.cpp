@@ -82,3 +82,81 @@ unsigned int usec_difference(struct timespec start, struct timespec end)
     int diff = (end.tv_nsec - start.tv_nsec) / 1000;
     return diff + ((end.tv_sec - start.tv_sec) * 1e6);
 }
+
+int b64_octet(const char in[4], unsigned char out[3])
+{
+    unsigned long octet = 0;
+    int bytes = 3;
+
+    for (unsigned int i = 0; i < 4; i++)
+    {
+        unsigned char index;
+
+        if (in[i] == '=')
+        {
+            if (i == 0 || i == 1)
+                return -1;
+            else if (i == 2 && in[i] != '=')
+                return -1;
+            else if (i == 2)
+                bytes = 1;
+            else
+                bytes = 2;
+            break;
+        }
+        else if ('A' <= in[i] && in[i] <= 'Z')
+            index = (in[i] - 'A');
+        else if ('a' <= in[i] && in[i] <= 'z')
+            index = (in[i] - 'a' + 26);
+        else if ('0' <= in[i] && in[i] <= '9')
+            index = (in[i] - '0' + 52);
+        else if (in[i] == '+')
+            index = 62;
+        else if (in[i] == '/')
+            index = 63;
+        else
+            return -1;
+
+        octet += index << (6 * (3 - i));
+    }
+
+    out[0] = octet >> 16;
+    out[1] = octet >> 8;
+    out[2] = octet;
+
+    return bytes;
+}
+
+std::vector<unsigned char> *b64_decode(const std::string b64)
+{
+    if (b64.length() % 4 != 0)
+    {
+        return NULL;
+    }
+
+    std::vector<unsigned char> *vec = new std::vector<unsigned char>(b64.length() / 4 * 3, 0);
+    int bytes;
+    char octet_in[4];
+    unsigned char octet_out[3];
+
+    for (unsigned int i = 0; i < b64.length() / 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+            octet_in[j] = b64[(i * 4) + j];
+        bytes = b64_octet(octet_in, octet_out);
+        if (bytes == -1)
+        {
+            delete vec;
+            return NULL;
+        }
+        for (int j = 0; j < bytes; j++)
+        {
+            (*vec)[(i * 3) + j] = octet_out[j];
+        }
+        if (bytes != 3)
+            for (int j = bytes; j < 3; j++)
+                vec->pop_back();
+    }
+
+    return vec;
+}
