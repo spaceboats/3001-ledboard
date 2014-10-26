@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include "led-matrix.h"
 #include "rapidjson/document.h"
+#include "lodepng/lodepng.h"
 #include "util.h"
 #include "Emulator.h"
 #include "State.h"
@@ -91,6 +92,46 @@ void read_state(read_state_args_t *args)
                 if (!print_error(get_color(document["data"][i], rgb[i]), "\"data[" + std::to_string(i) + "\" value is invalid")) continue;
             }
             ptr = new PixelMap(args->width, args->height, rgb, (unsigned int) document["data"].Size());
+            delete[] rgb;
+        }
+        else if (mode.compare("png") == 0)
+        {
+            if (!print_error(document.HasMember("data"), "missing \"data\" key")) continue;
+            if (!print_error(document["data"].IsString(), "\"data\" value is not string")) continue;
+
+            std::string data = document["data"].GetString();
+            std::vector<unsigned char> *png = b64_decode(data);
+            if (!print_error(png != NULL, "\"data\" value is not valid base64 string")) continue;
+
+            std::vector<unsigned char> rgba_vec;
+            unsigned int width, height;
+            lodepng::State png_state;
+            unsigned int error = lodepng::decode(rgba_vec, width, height, png_state, *png);
+            if (!print_error(!error, std::string("\"data\" decoded is not valid PNG: ") + lodepng_error_text(error))) continue;
+            delete png;
+
+            color_alpha_t rgba;
+            color_t *rgb = new color_t[rgba_vec.size() / 4];
+            color_t background;
+            if (png_state.info_png.background_defined)
+            {
+                background[0] = png_state.info_png.background_r;
+                background[1] = png_state.info_png.background_g;
+                background[2] = png_state.info_png.background_b;
+            }
+            else
+            {
+                memset(background, 0, sizeof(color_t));
+            }
+
+            for (unsigned int i = 0; i < rgba_vec.size() / 4; i++)
+            {
+                for (unsigned int j = 0; j < 4; j++)
+                    rgba[j] = rgba_vec[(i * 4) + j];
+                apply_alpha(rgba, rgb[i], background);
+            }
+
+            ptr = new PixelMap(width, height, rgb, rgba_vec.size() / 4);
             delete[] rgb;
         }
         else if (mode.compare("conway") == 0)

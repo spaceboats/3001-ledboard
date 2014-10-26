@@ -9,13 +9,16 @@ endif
 
 unexport CXXFLAGS
 
-OBJS=main.o util.o Emulator.o Fill.o PixelMap.o Conway.o
+OBJS=main.o util.o lodepng.o Emulator.o Fill.o PixelMap.o Conway.o
 
 board_controller: $(OBJS) matrix/lib/librgbmatrix.a
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
 
 main.o: main.cpp
 	$(CXX) -c $(CXXFLAGS) $<
+
+lodepng.o: lodepng/lodepng.cpp lodepng/lodepng.h
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 %.o: %.cpp %.h
 	$(CXX) -c $(CXXFLAGS) $<

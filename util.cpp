@@ -160,3 +160,13 @@ std::vector<unsigned char> *b64_decode(const std::string b64)
 
     return vec;
 }
+
+void apply_alpha(const color_alpha_t in, color_t out, const color_t background)
+{
+    double alpha = ((double) in[3]) / 255.0;
+
+    for (unsigned int i = 0; i < 3; i++)
+    {
+        out[i] = ((double) in[i]) * alpha + ((double) background[i]) * (1.0 - alpha);
+    }
+}
