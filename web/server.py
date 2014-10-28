@@ -1,5 +1,6 @@
 import cherrypy
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -10,9 +11,8 @@ def json_fail():
     def json_fail_handler(handler):
         def f(*args, **kwargs):
             value = handler(*args, **kwargs)
-            if isinstance(value, dict):
-                if value.get('status', None) == 'fail':
-                    cherrypy.serving.response.status = 400
+            if isinstance(value, dict) and value.get('status', None) == 'fail':
+                cherrypy.serving.response.status = 400
             return value
         return f
 
@@ -36,14 +36,15 @@ class BoardFrontend(object):
         self.proc = subprocess.Popen(controller_cmd, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE)
         self.responses = dict()
-        self.lock = threading.Lock()
+        self.stdin_lock = threading.Lock()
+        self.stdout_lock = threading.Lock()
         self._board = None
 
     def _send_command(self, cmd):
         request_id = uuid.uuid4().bytes
         if not isinstance(cmd, basestring):
             cmd = json.dumps(cmd)
-        with self.lock:
+        with self.stdin_lock:
             self.proc.stdin.write(request_id + cmd + '\n')
         for line in iter(self._proc_readline, b''):
             self.responses[line[:16]] = line[16:].strip()
@@ -58,7 +59,7 @@ class BoardFrontend(object):
                 return resp
 
     def _proc_readline(self):
-        with self.lock:
+        with self.stdout_lock:
             return self.proc.stdout.readline()
 
     @cherrypy.expose
@@ -87,7 +88,15 @@ class BoardFrontend(object):
 
 
 if __name__ == '__main__':
+    def subdir(dir):
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), dir))
+
     if len(sys.argv) == 1:
         print 'usage: {0} [BOARD CONTROLLER COMMAND]'.format(sys.argv[0])
         sys.exit(1)
-    cherrypy.quickstart(BoardFrontend(sys.argv[1:]))
+    cherrypy.quickstart(BoardFrontend(sys.argv[1:]), '', {
+        '/static': {'tools.staticdir.on': True,
+                    'tools.staticdir.dir': subdir('static')},
+        '/static/bootstrap': {'tools.staticdir.on': True,
+                              'tools.staticdir.dir': subdir('bootstrap/dist')},
+    })

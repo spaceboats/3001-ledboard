@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>LED board controller</title>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://mjolnic.github.io/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.min.css" rel="stylesheet">
+
+        <style>
+            h1 {
+                margin-bottom: 30px;
+            }
+
+            .tab-content {
+                margin-top: 15px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+
+            <h1>LED board controller</h1>
+
+            <!-- Nav tabs -->
+            <ul id="navtabs" class="nav nav-tabs" role="tablist">
+                <li><a href="#tab-fill" role="tab" data-toggle="tab">Color fill</a></li>
+                <li><a href="#tab-png" role="tab" data-toggle="tab">Image upload</a></li>
+                <li class="active"><a href="#tab-conway" role="tab" data-toggle="tab">Conway's Game of Life</a></li>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content">
+                <div class="tab-pane" id="tab-fill">
+                    <form id="form-fill" class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label for="fill-color" class="col-sm-2 control-label">Color</label>
+                            <div class="col-sm-2">
+                                <div class="input-group fill-color">
+                                    <input type="text" class="form-control" id="fill-color" value="" />
+                                    <span class="input-group-addon"><i></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary">Go!</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane" id="tab-png">
+                </div>
+                <div class="tab-pane active" id="tab-conway">
+                    <form id="form-conway" class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label for="conway-color" class="col-sm-2 control-label">Color</label>
+                            <div class="col-sm-2">
+                                <div class="input-group conway-color">
+                                    <input type="text" class="form-control" id="conway-color" value="" />
+                                    <span class="input-group-addon"><i></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary">Go!</button>
+                                <span class="ok"><i class="glyphicon glyphicon-ok"></i> Success</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+        <script src="https://mjolnic.github.io/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="ie10-viewport-bug-workaround.js"></script>
+
+        <script>
+            $(function () {
+                var post_state = function (state) {
+                };
+
+                var get_color = function (element) {
+                    return $(element).data('color').substr(1);
+                };
+
+                $('#navtabs a').click(function (e) {
+                    e.preventDefault();
+                    $(this).tab('show');
+                });
+
+                $('.input-group.fill-color').colorpicker({'format': 'hex'});
+                $('.input-group.conway-color').colorpicker({'format': 'hex'});
+
+                $('#tab-fill form').submit(function (e) {
+                    e.preventDefault();
+                });
+                $('#tab-conway form').submit(function (e) {
+                    e.preventDefault();
+                    state = {};
+                    state.mode = 'conway';
+                    state.color = get_color($(e.target).find('.conway-color').first());
+                    console.log(state);
+                });
+            });
+        </script>
+    </body>
+</html>

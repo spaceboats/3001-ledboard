@@ -7,3 +7,6 @@
 [submodule "lodepng"]
 	path = lodepng
 	url = https://github.com/lvandeve/lodepng.git
+[submodule "web/bootstrap"]
+	path = web/bootstrap
+	url = https://github.com/twbs/bootstrap.git
