@@ -10,8 +10,9 @@ def json_fail():
     def json_fail_handler(handler):
         def f(*args, **kwargs):
             value = handler(*args, **kwargs)
-            if value['status'] == 'fail':
-                cherrypy.serving.response.status = 400
+            if isinstance(value, dict):
+                if value.get('status', None) == 'fail':
+                    cherrypy.serving.response.status = 400
             return value
         return f
 
