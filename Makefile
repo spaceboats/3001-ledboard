@@ -1,5 +1,5 @@
-override CXXFLAGS+=-Imatrix/include -Irapidjson/include -g -gdwarf-2 -Wall -Wunused -Wextra -pedantic -std=c++11
-LDFLAGS+=-Lmatrix/lib -lrgbmatrix -lrt -lm -lpthread
+override CXXFLAGS+=-Imatrix/include -Irapidjson/include $(shell freetype-config --cflags) -g -gdwarf-2 -Wall -Wunused -Wextra -pedantic -std=c++11
+LDFLAGS+=-Lmatrix/lib -lrgbmatrix -lrt -lm -lpthread -lfreetype
 
 ifneq (,$(findstring -DEMULATE_LEDBOARD,$(CXXFLAGS)))
 LDFLAGS+=-lSDL
@@ -7,7 +7,7 @@ endif
 
 unexport CXXFLAGS
 
-OBJS=main.o util.o lodepng.o Emulator.o Fill.o PixelMap.o Conway.o
+OBJS=main.o util.o lodepng.o Emulator.o Fill.o PixelMap.o Conway.o TextMap.o
 
 board_controller: $(OBJS) matrix/lib/librgbmatrix.a
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
