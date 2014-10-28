@@ -36,7 +36,7 @@
 class TextMap : public State
 {
     public:
-        TextMap(const char* ttf_font_file, const scroll_args_t scroll_args);
+        TextMap(const char* ttf_font_file, const char* message, const color_t color, const scroll_args_t scroll_args);
         ~TextMap();
 
         void tick(rgb_matrix::Canvas &canvas);

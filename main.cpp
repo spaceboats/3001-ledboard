@@ -82,10 +82,14 @@ void read_state(read_state_args_t *args)
             if (!print_error(document.HasMember("font"), "missing \"font\" key")) continue;
             if (!print_error(document["font"].IsString(), "\"mode\" value is not a string")) continue;
             const char* font_name = document["font"].GetString();
+            if (!print_error(document.HasMember("color"), "missing \"color\" key")) continue;
+
+            color_t rgb;
+            if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
 
             if (!get_scroll_args(document, scroll_args)) continue;
             
-            ptr = new TextMap(font_name, scroll_args);
+            ptr = new TextMap(font_name, "x", rgb, scroll_args);
         }
         else if (mode.compare("pixelmap") == 0)
         {
