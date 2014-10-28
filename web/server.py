@@ -80,6 +80,11 @@ class BoardFrontend(object):
         else:
             return {'status': 'fail', 'data': 'not implemented'}
 
+    @cherrypy.expose
+    @json_api
+    def blank(self):
+        return self._send_command({'mode': 'fill', 'color': 0})
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
