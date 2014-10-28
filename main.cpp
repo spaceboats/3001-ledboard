@@ -56,124 +56,151 @@ void read_state(read_state_args_t *args)
     std::string input, mode;
     rapidjson::Document document;
 
-    while (!std::getline(std::cin, input).eof())
+    while (std::getline(std::cin, input))
     {
-        /* initial sanity check for the input */
-        document.Parse(input.c_str());
-        if (!print_error(document.IsObject(), "not JSON object")) continue;
-        if (!print_error(document.HasMember("mode"), "missing \"mode\" key")) continue;
-        if (!print_error(document["mode"].IsString(), "\"mode\" value is not string")) continue;
+        char request_id[17];
+        memcpy(request_id, input.substr(0, 16).c_str(), 17);
+        std::string command = input.substr(16, std::string::npos);
 
-        /* switch on mode */
-        mode = document["mode"].GetString();
-        if (mode.compare("fill") == 0)
+        if (command.compare("board") == 0)
         {
-            if (!print_error(document.HasMember("color"), "missing \"color\" key")) continue;
+            rapidjson::Document response;
+            response.SetObject();
 
-            color_t rgb;
-            if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
-            ptr = new Fill(rgb);
-        }
-        else if (mode.compare("pixelmap") == 0)
-        {
-            unsigned int width = args->width;
-            unsigned int height = args->height;
-            scroll_args_t scroll_args;
+            rapidjson::Value height(rapidjson::kNumberType);
+            rapidjson::Value width(rapidjson::kNumberType);
+            rapidjson::Value refreshrate(rapidjson::kNumberType);
 
-            if (!print_error(document.HasMember("data"), "missing \"data\" key")) continue;
-            if (!print_error(document["data"].IsArray(), "\"data\" value is not array")) continue;
+            height = BOARD_ROWS;
+            width = BOARD_CHAIN * 32;
+            refreshrate = TICK_LENGTH / 1000;
 
-            color_t *rgb = new color_t[width * height];
-            memset(rgb, 0, sizeof(color_t) * width * height);
+            response.AddMember("height", height, response.GetAllocator());
+            response.AddMember("width", width, response.GetAllocator());
+            response.AddMember("refreshrate", refreshrate, response.GetAllocator());
 
-            for (unsigned int i = 0; i < std::min(document["data"].Size(), width * height); i++)
-            {
-                if (!print_error(get_color(document["data"][i], rgb[i]), "\"data[" + std::to_string(i) + "\" value is invalid")) continue;
-            }
-
-            if (document.HasMember("width"))
-            {
-                if (!print_error(document["width"].IsUint(), "\"width\" value is invalid")) continue;
-                width = document["width"].GetUint();
-            }
-            if (document.HasMember("height"))
-            {
-                if (!print_error(document["height"].IsUint(), "\"height\" value is invalid")) continue;
-                width = document["height"].GetUint();
-            }
-
-            if (!get_scroll_args(document, scroll_args)) continue;
-
-            ptr = new PixelMap(width, height, rgb, scroll_args);
-            delete[] rgb;
-        }
-        else if (mode.compare("png") == 0)
-        {
-            scroll_args_t scroll_args;
-
-            if (!print_error(document.HasMember("data"), "missing \"data\" key")) continue;
-            if (!print_error(document["data"].IsString(), "\"data\" value is not string")) continue;
-
-            std::string data = document["data"].GetString();
-            std::vector<unsigned char> *png = b64_decode(data);
-            if (!print_error(png != NULL, "\"data\" value is not valid base64 string")) continue;
-
-            std::vector<unsigned char> rgba_vec;
-            unsigned int width, height;
-            lodepng::State png_state;
-            unsigned int error = lodepng::decode(rgba_vec, width, height, png_state, *png);
-            if (!print_error(!error, std::string("\"data\" decoded is not valid PNG: ") + lodepng_error_text(error))) continue;
-            delete png;
-
-            if (!get_scroll_args(document, scroll_args)) continue;
-
-            color_alpha_t rgba;
-            color_t *rgb = new color_t[width * height];
-            color_t background;
-            if (png_state.info_png.background_defined)
-            {
-                background[0] = png_state.info_png.background_r;
-                background[1] = png_state.info_png.background_g;
-                background[2] = png_state.info_png.background_b;
-            }
-            else
-            {
-                memset(background, 0, sizeof(color_t));
-            }
-
-            for (unsigned int i = 0; i < width * height; i++)
-            {
-                for (unsigned int j = 0; j < 4; j++)
-                    rgba[j] = rgba_vec[(i * 4) + j];
-                apply_alpha(rgba, rgb[i], background);
-            }
-
-            ptr = new PixelMap(width, height, rgb, scroll_args);
-            delete[] rgb;
-        }
-        else if (mode.compare("conway") == 0)
-        {
-            color_t rgb = {255, 0, 0};
-            unsigned int interval = 200000;
-
-            if (document.HasMember("color"))
-                if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
-            if (document.HasMember("interval"))
-            {
-                if (!print_error(document["interval"].IsUint(), "\"interval\" value is invalid")) continue;
-                interval = document["interval"].GetUint() * 1000;
-            }
-
-            ptr = new Conway(args->width, args->height, rgb, interval / TICK_LENGTH);
+            send_ok(request_id, response);
         }
         else
         {
-            print_error(false, "invalid mode \"" + mode + "\"");
-            continue;
-        }
+            /* initial sanity check for the input */
+            document.Parse(command.c_str());
+            if (!check_error(request_id, document.IsObject(), "not JSON object")) continue;
+            if (!check_error(request_id, document.HasMember("mode"), "missing \"mode\" key")) continue;
+            if (!check_error(request_id, document["mode"].IsString(), "\"mode\" value is not string")) continue;
 
-        std::swap(*args->state, ptr);
-        args->garbage.push_back(ptr);
+            /* switch on mode */
+            mode = document["mode"].GetString();
+            if (mode.compare("fill") == 0)
+            {
+                if (!check_error(request_id, document.HasMember("color"), "missing \"color\" key")) continue;
+
+                color_t rgb;
+                if (!check_error(request_id, get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
+                ptr = new Fill(rgb);
+            }
+            else if (mode.compare("pixelmap") == 0)
+            {
+                unsigned int width = args->width;
+                unsigned int height = args->height;
+                scroll_args_t scroll_args;
+
+                if (!check_error(request_id, document.HasMember("data"), "missing \"data\" key")) continue;
+                if (!check_error(request_id, document["data"].IsArray(), "\"data\" value is not array")) continue;
+
+                color_t *rgb = new color_t[width * height];
+                memset(rgb, 0, sizeof(color_t) * width * height);
+
+                for (unsigned int i = 0; i < std::min(document["data"].Size(), width * height); i++)
+                {
+                    if (!check_error(request_id, get_color(document["data"][i], rgb[i]), "\"data[" + std::to_string(i) + "\" value is invalid")) continue;
+                }
+
+                if (document.HasMember("width"))
+                {
+                    if (!check_error(request_id, document["width"].IsUint(), "\"width\" value is invalid")) continue;
+                    width = document["width"].GetUint();
+                }
+                if (document.HasMember("height"))
+                {
+                    if (!check_error(request_id, document["height"].IsUint(), "\"height\" value is invalid")) continue;
+                    width = document["height"].GetUint();
+                }
+
+                if (!get_scroll_args(request_id, document, scroll_args)) continue;
+
+                ptr = new PixelMap(width, height, rgb, scroll_args);
+                delete[] rgb;
+            }
+            else if (mode.compare("png") == 0)
+            {
+                scroll_args_t scroll_args;
+
+                if (!check_error(request_id, document.HasMember("data"), "missing \"data\" key")) continue;
+                if (!check_error(request_id, document["data"].IsString(), "\"data\" value is not string")) continue;
+
+                std::string data = document["data"].GetString();
+                std::vector<unsigned char> *png = b64_decode(data);
+                if (!check_error(request_id, png != NULL, "\"data\" value is not valid base64 string")) continue;
+
+                std::vector<unsigned char> rgba_vec;
+                unsigned int width, height;
+                lodepng::State png_state;
+                unsigned int error = lodepng::decode(rgba_vec, width, height, png_state, *png);
+                if (!check_error(request_id, !error, std::string("\"data\" decoded is not valid PNG: ") + lodepng_error_text(error))) continue;
+                delete png;
+
+                if (!get_scroll_args(request_id, document, scroll_args)) continue;
+
+                color_alpha_t rgba;
+                color_t *rgb = new color_t[width * height];
+                color_t background;
+                if (png_state.info_png.background_defined)
+                {
+                    background[0] = png_state.info_png.background_r;
+                    background[1] = png_state.info_png.background_g;
+                    background[2] = png_state.info_png.background_b;
+                }
+                else
+                {
+                    memset(background, 0, sizeof(color_t));
+                }
+
+                for (unsigned int i = 0; i < width * height; i++)
+                {
+                    for (unsigned int j = 0; j < 4; j++)
+                        rgba[j] = rgba_vec[(i * 4) + j];
+                    apply_alpha(rgba, rgb[i], background);
+                }
+
+                ptr = new PixelMap(width, height, rgb, scroll_args);
+                delete[] rgb;
+            }
+            else if (mode.compare("conway") == 0)
+            {
+                color_t rgb = {255, 0, 0};
+                unsigned int interval = 200000;
+
+                if (document.HasMember("color"))
+                    if (!check_error(request_id, get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
+                if (document.HasMember("interval"))
+                {
+                    if (!check_error(request_id, document["interval"].IsUint(), "\"interval\" value is invalid")) continue;
+                    interval = document["interval"].GetUint() * 1000;
+                }
+
+                ptr = new Conway(args->width, args->height, rgb, interval / TICK_LENGTH);
+            }
+            else
+            {
+                check_error(request_id, false, "invalid mode \"" + mode + "\"");
+                continue;
+            }
+
+            std::swap(*args->state, ptr);
+            args->garbage.push_back(ptr);
+            send_ok(request_id);
+        }
     }
 }
 

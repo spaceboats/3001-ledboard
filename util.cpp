@@ -22,15 +22,37 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include "rapidjson/writer.h"
 #include "util.h"
 
-bool print_error(bool assertion, std::string msg)
+void send_ok(const char request_id[17])
+{
+    std::cout << request_id << "ok" << std::endl;
+}
+
+void send_ok(const char request_id[17], std::string msg)
+{
+    std::cout << request_id << "ok " << msg << std::endl;
+}
+
+void send_ok(const char request_id[17], rapidjson::Document &msg)
+{
+    rapidjson::StringBuffer buf;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buf);
+    msg.Accept(writer);
+
+    send_ok(request_id, buf.GetString());
+}
+
+void send_error(const char request_id[16], std::string error_msg)
+{
+    std::cout << request_id << "fail " << error_msg << std::endl;
+}
+
+bool check_error(const char request_id[16], bool assertion, std::string error_msg)
 {
     if (!assertion)
-    {
-        std::cout << msg << std::endl;
-    }
-
+        send_error(request_id, error_msg);
     return assertion;
 }
 
@@ -172,7 +194,7 @@ void apply_alpha(const color_alpha_t in, color_t out, const color_t background)
     }
 }
 
-bool get_scroll_args(rapidjson::Document &document, scroll_args_t &scroll_args)
+bool get_scroll_args(const char request_id[16], rapidjson::Document &document, scroll_args_t &scroll_args)
 {
     scroll_args.dir = SCROLL_NONE;
     scroll_args.padding = 16;
@@ -192,14 +214,14 @@ bool get_scroll_args(rapidjson::Document &document, scroll_args_t &scroll_args)
 
         if (document.HasMember(key.c_str()))
         {
-            if (!print_error(document[key.c_str()].IsUint(), "\"" + key + "\" value is not unsigned integer")) return false;
+            if (!check_error(request_id, document[key.c_str()].IsUint(), "\"" + key + "\" value is not unsigned integer")) return false;
             *value = document[key.c_str()].GetUint();
         }
     }
 
     if (document.HasMember("scroll_dir"))
     {
-        if (!print_error(document["scroll_dir"].IsString(), "\"scroll_dir\" value is not string")) return false;
+        if (!check_error(request_id, document["scroll_dir"].IsString(), "\"scroll_dir\" value is not string")) return false;
         std::string dir = document["scroll_dir"].GetString();
         if (dir.compare("horizontal") == 0)
             scroll_args.dir = SCROLL_HORIZONTAL;
@@ -207,13 +229,13 @@ bool get_scroll_args(rapidjson::Document &document, scroll_args_t &scroll_args)
             scroll_args.dir = SCROLL_VERTICAL;
         else
         {
-            print_error(false, "invalid scroll_dir \"" + dir + "\"");
+            check_error(request_id, false, "invalid scroll_dir \"" + dir + "\"");
             return false;
         }
     }
 
     if (document.HasMember("scroll_padding_color"))
-        if (!print_error(get_color(document["scroll_padding_color"], scroll_args.padding_color), "\"color\" value is invalid")) return false;
+        if (!check_error(request_id, get_color(document["scroll_padding_color"], scroll_args.padding_color), "\"color\" value is invalid")) return false;
 
     return true;
 }

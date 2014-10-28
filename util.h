@@ -51,13 +51,17 @@ struct scroll_args_t {
     unsigned int wait;
 };
 
-bool print_error(bool assertion, std::string msg);
+void send_ok(const char request_id[17]);
+void send_ok(const char request_id[17], std::string msg);
+void send_ok(const char request_id[17], rapidjson::Document &msg);
+void send_error(const char request_id[16], std::string error_msg);
+bool check_error(const char request_id[16], bool assertion, std::string error_msg);
 bool get_color(rapidjson::Value &value, color_t rgb);
 unsigned int usec_difference(struct timespec start, struct timespec end);
 int b64_octet(const char in[4], unsigned char out[3]);
 std::vector<unsigned char> *b64_decode(const std::string b64);
 void apply_alpha(const color_alpha_t in, color_t out, const color_t background);
-bool get_scroll_args(rapidjson::Document &document, scroll_args_t &scroll_args);
+bool get_scroll_args(const char request_id[16], rapidjson::Document &document, scroll_args_t &scroll_args);
 void copy_scroll_args(scroll_args_t &dest, const scroll_args_t src);
 unsigned int ms_to_ticks(unsigned int ms);
 
