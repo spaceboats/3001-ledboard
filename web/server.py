@@ -40,7 +40,6 @@ class AsynchronousFileReader(threading.Thread):
 
     def run(self):
         for line in iter(self.fd.readline, b''):
-            print "from stdout: {0!r}".format(line)
             self.queue.put(line)
 
     def eof(self):
@@ -71,7 +70,6 @@ class BoardFrontend(object):
         if not isinstance(cmd, basestring):
             cmd = json.dumps(cmd)
         with self.lock:
-            print "to stdin: {0!r}".format(request_id + cmd + '\n')
             self.proc.stdin.write(request_id + cmd + '\n')
         for line in iter(self._proc_readline, None):
             self.responses[line[:32]] = line[32:].strip()
