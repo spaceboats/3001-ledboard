@@ -16,6 +16,57 @@
             .tab-content {
                 margin-top: 15px;
             }
+
+            .after-button {
+                margin-left: 15px;
+                vertical-align: middle;
+                line-height: 1;
+                opacity: 0;
+            }
+
+            .glyphicon-refresh-animate {
+                transform-origin: 50% 42%;
+                -webkit-animation: spinner 1500ms infinite linear;
+                -moz-animation: spinner 1500ms infinite linear;
+                -ms-animation: spinner 1500ms infinite linear;
+                -o-animation: spinner 1500ms infinite linear;
+                animation: spinner 1500ms infinite linear;
+            }
+
+            @-webkit-keyframes spinner {
+                0% { -webkit-transform: rotate(0deg); }
+                100% { -webkit-transform: rotate(360deg); }
+            }
+
+            @-moz-keyframes spinner {
+                0% { -moz-transform: rotate(0deg); }
+
+                100% { -moz-transform: rotate(360deg); }
+            }
+
+            @-o-keyframes spinner {
+                0% { -o-transform: rotate(0deg); }
+
+                100% { -o-transform: rotate(360deg); }
+            }
+
+            @keyframes spinner {
+                0% {
+                    -webkit-transform: rotate(0deg);
+                    -moz-transform: rotate(0deg);
+                    -ms-transform: rotate(0deg);
+                    -o-transform: rotate(0deg);
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    -webkit-transform: rotate(360deg);
+                    -moz-transform: rotate(360deg);
+                    -ms-transform: rotate(360deg);
+                    -o-transform: rotate(360deg);
+                    transform: rotate(360deg);
+                }
+            }
         </style>
     </head>
     <body>
@@ -25,20 +76,20 @@
 
             <!-- Nav tabs -->
             <ul id="navtabs" class="nav nav-tabs" role="tablist">
-                <li><a href="#tab-fill" role="tab" data-toggle="tab">Color fill</a></li>
+                <li class="active"><a href="#tab-fill" role="tab" data-toggle="tab">Color fill</a></li>
                 <li><a href="#tab-png" role="tab" data-toggle="tab">Image upload</a></li>
-                <li class="active"><a href="#tab-conway" role="tab" data-toggle="tab">Conway's Game of Life</a></li>
+                <li><a href="#tab-conway" role="tab" data-toggle="tab">Conway's Game of Life</a></li>
             </ul>
 
             <!-- Tab panes -->
             <div class="tab-content">
-                <div class="tab-pane" id="tab-fill">
+                <div class="tab-pane active" id="tab-fill">
                     <form id="form-fill" class="form-horizontal" role="form">
                         <div class="form-group">
                             <label for="fill-color" class="col-sm-2 control-label">Color</label>
                             <div class="col-sm-2">
                                 <div class="input-group fill-color">
-                                    <input type="text" class="form-control" id="fill-color" value="" />
+                                    <input type="text" class="form-control" id="fill-color" value="#000000" />
                                     <span class="input-group-addon"><i></i></span>
                                 </div>
                             </div>
@@ -46,19 +97,20 @@
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-10">
                                 <button type="submit" class="btn btn-primary">Go!</button>
+                                <span class="after-button"></span>
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="tab-pane" id="tab-png">
                 </div>
-                <div class="tab-pane active" id="tab-conway">
+                <div class="tab-pane" id="tab-conway">
                     <form id="form-conway" class="form-horizontal" role="form">
                         <div class="form-group">
                             <label for="conway-color" class="col-sm-2 control-label">Color</label>
                             <div class="col-sm-2">
                                 <div class="input-group conway-color">
-                                    <input type="text" class="form-control" id="conway-color" value="" />
+                                    <input type="text" class="form-control" id="conway-color" value="#ff0000" />
                                     <span class="input-group-addon"><i></i></span>
                                 </div>
                             </div>
@@ -66,7 +118,7 @@
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-10">
                                 <button type="submit" class="btn btn-primary">Go!</button>
-                                <span class="ok"><i class="glyphicon glyphicon-ok"></i> Success</span>
+                                <span class="after-button"></span>
                             </div>
                         </div>
                     </form>
@@ -83,11 +135,51 @@
 
         <script>
             $(function () {
-                var post_state = function (state) {
+                var clear_progress = function () {
+                    $('.after-button').removeClass('text-success').removeClass('text-danger').html('');
+                };
+
+                var post_state = function (state, target) {
+                    var after = $(target).find('.after-button');
+
+                    var func = function (resp) {
+                        var msg;
+
+                        clear_progress();
+
+                        if (resp.status == 'ok') {
+                            msg = '<i class="glyphicon glyphicon-ok"></i> Success';
+                            after.addClass('text-success');
+                        } else {
+                            msg = '<i class="glyphicon glyphicon-remove"></i> Failed';
+                            after.addClass('text-danger');
+                        }
+                        if (resp.data) {
+                            msg += ': ' + resp.data;
+                        }
+
+                        after.html(msg);
+                        setInterval(function () { after.fadeTo(200, 0); }, 3000);
+                    };
+
+                    clear_progress();
+                    after.html('<i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i>');
+                    after.fadeTo(0, 1);
+
+                    $.ajax({
+                        url: '/state',
+                        type: 'POST',
+                        data: JSON.stringify(state),
+                        success: func,
+                        error: function (jqXHR, textStatus, errorThrown) { func({ 'status': 'fail', 'data': errorThrown }); },
+                        dataType: 'json',
+                        contentType: 'application/json'
+                    });
                 };
 
                 var get_color = function (element) {
-                    return $(element).data('color').substr(1);
+                    color = $(element).data('color');
+                    if (color) { return color.substr(1); }
                 };
 
                 $('#navtabs a').click(function (e) {
@@ -100,13 +192,11 @@
 
                 $('#tab-fill form').submit(function (e) {
                     e.preventDefault();
+                    post_state({ 'mode': 'fill', 'color': get_color($(e.target).find('.fill-color').first()) }, e.target);
                 });
                 $('#tab-conway form').submit(function (e) {
                     e.preventDefault();
-                    state = {};
-                    state.mode = 'conway';
-                    state.color = get_color($(e.target).find('.conway-color').first());
-                    console.log(state);
+                    post_state({ 'mode': 'conway', 'color': get_color($(e.target).find('.conway-color').first()) }, e.target);
                 });
             });
         </script>

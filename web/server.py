@@ -96,7 +96,7 @@ class BoardFrontend(object):
 
     @cherrypy.expose
     def index(self):
-        return 'html added and removed here'
+        raise cherrypy.HTTPRedirect('/static/index.html')
 
     @cherrypy.expose
     @json_api
