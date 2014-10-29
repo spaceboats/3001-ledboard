@@ -1,3 +1,4 @@
+import Queue
 import cherrypy
 import json
 import os
@@ -12,7 +13,7 @@ def json_fail():
         def f(*args, **kwargs):
             value = handler(*args, **kwargs)
             if isinstance(value, dict) and value.get('status', None) == 'fail':
-                cherrypy.serving.response.status = 400
+                cherrypy.serving.response.status = value.get('failcode', 400)
             return value
         return f
 
@@ -30,24 +31,50 @@ def json_api(f):
     return f
 
 
+class AsynchronousFileReader(threading.Thread):
+
+    def __init__(self, fd, queue):
+        super(AsynchronousFileReader, self).__init__()
+        self.fd = fd
+        self.queue = queue
+
+    def run(self):
+        for line in iter(self.fd.readline, b''):
+            print "from stdout: {0!r}".format(line)
+            self.queue.put(line)
+
+    def eof(self):
+        return not self.is_alive() and self.queue.empty()
+
+
 class BoardFrontend(object):
 
     def __init__(self, controller_cmd):
         self.proc = subprocess.Popen(controller_cmd, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE)
+        self.stdout_queue = Queue.Queue()
+        self.stdout_reader = AsynchronousFileReader(self.proc.stdout,
+                                                    self.stdout_queue)
+        self.stdout_reader.start()
         self.responses = dict()
-        self.stdin_lock = threading.Lock()
-        self.stdout_lock = threading.Lock()
+        self.lock = threading.Lock()
         self._board = None
 
+        cherrypy.engine.subscribe('stop', self.stop)
+
+    def stop(self):
+        self.proc.stdin.close()
+        self.proc.wait()
+
     def _send_command(self, cmd):
-        request_id = uuid.uuid4().bytes
+        request_id = uuid.uuid4().hex
         if not isinstance(cmd, basestring):
             cmd = json.dumps(cmd)
-        with self.stdin_lock:
+        with self.lock:
+            print "to stdin: {0!r}".format(request_id + cmd + '\n')
             self.proc.stdin.write(request_id + cmd + '\n')
-        for line in iter(self._proc_readline, b''):
-            self.responses[line[:16]] = line[16:].strip()
+        for line in iter(self._proc_readline, None):
+            self.responses[line[:32]] = line[32:].strip()
             if request_id in self.responses:
                 proc_resp = self.responses[request_id].split(None, 1)
                 resp = {'status': proc_resp[0]}
@@ -57,10 +84,17 @@ class BoardFrontend(object):
                     except ValueError:
                         resp['data'] = proc_resp[1]
                 return resp
+        # if we hit this point, reading from self.proc.stdout timed out
+        return {'status': 'fail', 'failcode': 500,
+                'data': 'internal server error'}
 
     def _proc_readline(self):
-        with self.stdout_lock:
-            return self.proc.stdout.readline()
+        if self.stdout_reader.eof():
+            return None
+        try:
+            return self.stdout_queue.get(timeout=5)
+        except Queue.Empty:
+            return None
 
     @cherrypy.expose
     def index(self):

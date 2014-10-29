@@ -58,9 +58,8 @@ void read_state(read_state_args_t *args)
 
     while (std::getline(std::cin, input))
     {
-        char request_id[17];
-        memcpy(request_id, input.substr(0, 16).c_str(), 17);
-        std::string command = input.substr(16, std::string::npos);
+        std::string request_id = input.substr(0, REQUEST_ID_LENGTH);
+        std::string command = input.substr(REQUEST_ID_LENGTH, std::string::npos);
 
         if (command.compare("board") == 0)
         {

@@ -25,17 +25,17 @@
 #include "rapidjson/writer.h"
 #include "util.h"
 
-void send_ok(const char request_id[17])
+void send_ok(const std::string request_id)
 {
     std::cout << request_id << "ok" << std::endl;
 }
 
-void send_ok(const char request_id[17], std::string msg)
+void send_ok(const std::string request_id, std::string msg)
 {
     std::cout << request_id << "ok " << msg << std::endl;
 }
 
-void send_ok(const char request_id[17], rapidjson::Document &msg)
+void send_ok(const std::string request_id, rapidjson::Document &msg)
 {
     rapidjson::StringBuffer buf;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buf);
@@ -44,12 +44,12 @@ void send_ok(const char request_id[17], rapidjson::Document &msg)
     send_ok(request_id, buf.GetString());
 }
 
-void send_error(const char request_id[16], std::string error_msg)
+void send_error(const std::string request_id, std::string error_msg)
 {
     std::cout << request_id << "fail " << error_msg << std::endl;
 }
 
-bool check_error(const char request_id[16], bool assertion, std::string error_msg)
+bool check_error(const std::string request_id, bool assertion, std::string error_msg)
 {
     if (!assertion)
         send_error(request_id, error_msg);
@@ -194,7 +194,7 @@ void apply_alpha(const color_alpha_t in, color_t out, const color_t background)
     }
 }
 
-bool get_scroll_args(const char request_id[16], rapidjson::Document &document, scroll_args_t &scroll_args)
+bool get_scroll_args(const std::string request_id, rapidjson::Document &document, scroll_args_t &scroll_args)
 {
     scroll_args.dir = SCROLL_NONE;
     scroll_args.padding = 16;
