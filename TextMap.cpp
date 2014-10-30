@@ -42,7 +42,7 @@ TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t c
     // set everything to black
     memset(rgb, 0, sizeof(color_t) * width * height);
     getMsgRgbMat(rgb, color, width, height, message);
-    pixel_map = new PixelMap(width-1, height, rgb, scroll_args_in);
+    pixel_map = new PixelMap(width, height, rgb, scroll_args_in);
     delete[] rgb;
 
     // TODO: either delete the face and library here, or do it in the destructor.
@@ -132,18 +132,11 @@ bool TextMap::getMsgRgbMat(color_t* rgb, const color_t color, unsigned int width
             {
                 if(face->glyph->bitmap.buffer[h*bitmapWidth + w] == 255)
                 {
-                    // TODO: I think this will shove everything to the top of the line.
-                    rgb[h*bitmapWidth + w + penX][0] = color[0];
-                    rgb[h*bitmapWidth + w + penX][1] = color[1];
-                    rgb[h*bitmapWidth + w + penX][2] = color[2];
-                    std::cout << "1";
-                }
-                else
-                {
-                    std::cout << " ";
+                    rgb[(height - bitmapHeight + h)*width + w + penX][0] = color[0];
+                    rgb[(height - bitmapHeight + h)*width + w + penX][1] = color[0];
+                    rgb[(height - bitmapHeight + h)*width + w + penX][1] = color[0];
                 }
             }
-            std::cout << "\n";
         }
 
         penX += bitmapWidth + 1;

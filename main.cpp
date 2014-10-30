@@ -80,16 +80,19 @@ void read_state(read_state_args_t *args)
             scroll_args_t scroll_args;
             
             if (!print_error(document.HasMember("font"), "missing \"font\" key")) continue;
-            if (!print_error(document["font"].IsString(), "\"mode\" value is not a string")) continue;
+            if (!print_error(document["font"].IsString(), "\"font\" value is not a string")) continue;
             const char* font_name = document["font"].GetString();
             if (!print_error(document.HasMember("color"), "missing \"color\" key")) continue;
+            if (!print_error(document.HasMember("message"), "missing \"message\" key")) continue;
+            if (!print_error(document["message"].IsString(), "\"message\" value is not a string")) continue;
+            const char* message = document["message"].GetString();
 
             color_t rgb;
             if (!print_error(get_color(document["color"], rgb), "\"color\" value is invalid")) continue;
 
             if (!get_scroll_args(document, scroll_args)) continue;
             
-            ptr = new TextMap(font_name, "xCdkasdfljLdafd", rgb, scroll_args);
+            ptr = new TextMap(font_name, message, rgb, scroll_args);
         }
         else if (mode.compare("pixelmap") == 0)
         {
