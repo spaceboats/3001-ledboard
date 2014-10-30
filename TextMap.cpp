@@ -27,13 +27,17 @@
 #include "TextMap.h"
 #include <iostream>
 
+#define COLS_BETWEEN_CHAR 2
+#define COLS_FOR_SPACE 5
+
 TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t color, const scroll_args_t scroll_args_in)
 {
     initLibrary();
     initFace(ttf_font_file);
 
     // doesn't seem to like anything below 8 pixels.
-    FT_Set_Pixel_Sizes(face, 0, 16);
+    // Change 8 to 16 to use the full height of the 16 pixel board
+    FT_Set_Pixel_Sizes(face, 0, 8);
     unsigned int width;
     unsigned int height;
     getSize(width, height, message);
@@ -46,50 +50,6 @@ TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t c
     delete[] rgb;
 
     // TODO: either delete the face and library here, or do it in the destructor.
-    /*
-    FT_Load_Char(face, message[0], FT_LOAD_RENDER);
-    unsigned int width = face->glyph->bitmap.width;
-    unsigned int height = face->glyph->bitmap.rows;
-    color_t *rgb = new color_t[width*height];
-
-    // set everything to black
-    memset(rgb, 0, sizeof(color_t) * width * height); 
-
-    for(unsigned int i = 0; i < height; i++)
-    {
-        for(unsigned int j = 0; j < width; j++)
-        {
-            if(face->glyph->bitmap.buffer[i*width + j] == 255)
-            {
-                rgb[i*width + j][0] = color[0];
-                rgb[i*width + j][1] = color[1];
-                rgb[i*width + j][2] = color[2];
-            }
-            else
-            {
-                //std::cout << " ";
-            }
-        }
-        //std::cout << "\n";
-    }
-
-    pixel_map = new PixelMap(width, height, rgb, scroll_args_in);
-    delete[] rgb;
-    */
-
-    /*
-    if(FT_Set_Pixel_Sizes(face, 0, 16))
-    {
-        std::cout << "error with pixel set\n";
-    }
-
-    FT_Load_Char(face, 'a', FT_LOAD_RENDER);
-    FT_BBox acbox;
-    FT_Glyph glyph;
-    FT_Get_Glyph( face->glyph, &glyph);
-    FT_Glyph_Get_CBox( glyph, FT_GLYPH_BBOX_PIXELS, &acbox ); 
-    int x = 0;
-    */
 }
 
 TextMap::~TextMap()
@@ -111,14 +71,17 @@ bool TextMap::getMsgRgbMat(color_t* rgb, const color_t color, unsigned int width
     }
 
     unsigned int penX = 0;
-    // unsigned int penY = 0;
     for(unsigned int i = 0; i < strlen(message); i++)
     {
-        // TODO: Find out what FT_LOAD_RENDER does.
+        if(message[i] == ' ')
+        {
+            penX += COLS_FOR_SPACE;
+            continue;
+        }
+
         FT_Load_Char(face, message[i], FT_LOAD_RENDER);
         unsigned int bitmapWidth = face->glyph->bitmap.width;
         unsigned int bitmapHeight = face->glyph->bitmap.rows;
-        // if(bitmapHeight > height || penX+bitmapWidth > width)
         if((bitmapHeight-1) * bitmapWidth + (bitmapWidth-1) + penX >= height*width)
         {
             std::cout << "Either the height or width went oustide the bounds of the array.\n";
@@ -139,7 +102,7 @@ bool TextMap::getMsgRgbMat(color_t* rgb, const color_t color, unsigned int width
             }
         }
 
-        penX += bitmapWidth + 1;
+        penX += bitmapWidth + COLS_BETWEEN_CHAR;
     }
 
     return true;
@@ -147,30 +110,37 @@ bool TextMap::getMsgRgbMat(color_t* rgb, const color_t color, unsigned int width
 
 // SUMMARY: Gets the overall width and height needed to render this message to the board.
 // NOTE: Sets height and width to 0 and returns when library or face are null.
-void TextMap::getSize(unsigned int &width, unsigned int &height, const char* message)
+bool TextMap::getSize(unsigned int &width, unsigned int &height, const char* message)
 {
     width = 0;
     height = 0;
     if(library == 0)
     {
         std::cout << "Cannot get the width and height because the library was null.\n";
-        return;
+        return false;
     }
     else if(face == 0)
     {
         std::cout << "Cannot get the width and height because the face was null.\n";
-        return;
+        return false;
     }
 
     for(unsigned int i = 0; i < strlen(message); i++)
     {
+        if(message[i] == ' ')
+        {
+            width += COLS_FOR_SPACE;
+            continue;
+        }
+
         FT_Load_Char(face, message[i], FT_LOAD_RENDER);
 
-        // plus one for the space between chars
-        width += face->glyph->bitmap.width + 1;
+        width += face->glyph->bitmap.width + COLS_BETWEEN_CHAR;
         if(face->glyph->bitmap.rows > height)
             height = face->glyph->bitmap.rows;
     }
+
+    return true;
 }
 
 bool TextMap::initLibrary()
@@ -195,7 +165,6 @@ bool TextMap::initFace(const char* ttf_font_file, unsigned int face_index)
     if(FT_New_Face(library, ttf_font_file, face_index, &face))
     {
         std::cout << "Unable to open/read font file (" << ttf_font_file << ")\n";
-        //std::cout << "Unable to open/read font file\n";
         return false;
     } 
 
@@ -208,12 +177,4 @@ void TextMap::tick(rgb_matrix::Canvas &canvas)
     {
         pixel_map->tick(canvas);
     }
-    /*
-    std::vector<PixelMap>::iterator it;
-
-    for( it = pixel_maps.begin(); it != pixel_maps.end(); it++ )
-    {
-        it->tick(canvas);
-    }
-    */   
 }
