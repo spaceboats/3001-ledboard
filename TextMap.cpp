@@ -34,8 +34,20 @@ TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t c
 
     // doesn't seem to like anything below 8 pixels.
     FT_Set_Pixel_Sizes(face, 0, 16);
-    FT_Load_Char(face, message[0], FT_LOAD_RENDER);
+    unsigned int width;
+    unsigned int height;
+    getSize(width, height, message);
+    color_t *rgb = new color_t[width*height];
 
+    // set everything to black
+    memset(rgb, 0, sizeof(color_t) * width * height);
+    getMsgRgbMat(rgb, color, width, height, message);
+    pixel_map = new PixelMap(width-1, height, rgb, scroll_args_in);
+    delete[] rgb;
+
+    // TODO: either delete the face and library here, or do it in the destructor.
+    /*
+    FT_Load_Char(face, message[0], FT_LOAD_RENDER);
     unsigned int width = face->glyph->bitmap.width;
     unsigned int height = face->glyph->bitmap.rows;
     color_t *rgb = new color_t[width*height];
@@ -43,9 +55,9 @@ TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t c
     // set everything to black
     memset(rgb, 0, sizeof(color_t) * width * height); 
 
-    for(int i = 0; i < height; i++)
+    for(unsigned int i = 0; i < height; i++)
     {
-        for(int j = 0; j < width; j++)
+        for(unsigned int j = 0; j < width; j++)
         {
             if(face->glyph->bitmap.buffer[i*width + j] == 255)
             {
@@ -63,6 +75,8 @@ TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t c
 
     pixel_map = new PixelMap(width, height, rgb, scroll_args_in);
     delete[] rgb;
+    */
+
     /*
     if(FT_Set_Pixel_Sizes(face, 0, 16))
     {
@@ -81,6 +95,89 @@ TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t c
 TextMap::~TextMap()
 {
 
+}
+
+bool TextMap::getMsgRgbMat(color_t* rgb, const color_t color, unsigned int width, unsigned int height, const char* message)
+{
+    if(library == 0)
+    {
+        std::cout << "Cannot fill the rgb matrix because the library was null.\n";
+        return false;
+    }
+    else if(face == 0)
+    {
+        std::cout << "Cannot fill the rgb matrix because the face was null.\n";
+        return false;
+    }
+
+    unsigned int penX = 0;
+    // unsigned int penY = 0;
+    for(unsigned int i = 0; i < strlen(message); i++)
+    {
+        // TODO: Find out what FT_LOAD_RENDER does.
+        FT_Load_Char(face, message[i], FT_LOAD_RENDER);
+        unsigned int bitmapWidth = face->glyph->bitmap.width;
+        unsigned int bitmapHeight = face->glyph->bitmap.rows;
+        // if(bitmapHeight > height || penX+bitmapWidth > width)
+        if((bitmapHeight-1) * bitmapWidth + (bitmapWidth-1) + penX >= height*width)
+        {
+            std::cout << "Either the height or width went oustide the bounds of the array.\n";
+            return false;
+            // TODO: Maybe set the rgb back to black.
+        }
+
+        for(unsigned int h = 0; h < bitmapHeight; h++)
+        {
+            for(unsigned int w = 0; w < bitmapWidth; w++)
+            {
+                if(face->glyph->bitmap.buffer[h*bitmapWidth + w] == 255)
+                {
+                    // TODO: I think this will shove everything to the top of the line.
+                    rgb[h*bitmapWidth + w + penX][0] = color[0];
+                    rgb[h*bitmapWidth + w + penX][1] = color[1];
+                    rgb[h*bitmapWidth + w + penX][2] = color[2];
+                    std::cout << "1";
+                }
+                else
+                {
+                    std::cout << " ";
+                }
+            }
+            std::cout << "\n";
+        }
+
+        penX += bitmapWidth + 1;
+    }
+
+    return true;
+}
+
+// SUMMARY: Gets the overall width and height needed to render this message to the board.
+// NOTE: Sets height and width to 0 and returns when library or face are null.
+void TextMap::getSize(unsigned int &width, unsigned int &height, const char* message)
+{
+    width = 0;
+    height = 0;
+    if(library == 0)
+    {
+        std::cout << "Cannot get the width and height because the library was null.\n";
+        return;
+    }
+    else if(face == 0)
+    {
+        std::cout << "Cannot get the width and height because the face was null.\n";
+        return;
+    }
+
+    for(unsigned int i = 0; i < strlen(message); i++)
+    {
+        FT_Load_Char(face, message[i], FT_LOAD_RENDER);
+
+        // plus one for the space between chars
+        width += face->glyph->bitmap.width + 1;
+        if(face->glyph->bitmap.rows > height)
+            height = face->glyph->bitmap.rows;
+    }
 }
 
 bool TextMap::initLibrary()
@@ -114,7 +211,10 @@ bool TextMap::initFace(const char* ttf_font_file, unsigned int face_index)
 
 void TextMap::tick(rgb_matrix::Canvas &canvas)
 {
-    pixel_map->tick(canvas);
+    if(pixel_map != 0)
+    {
+        pixel_map->tick(canvas);
+    }
     /*
     std::vector<PixelMap>::iterator it;
 

@@ -47,6 +47,8 @@ class TextMap : public State
         FT_Face face;
         bool initLibrary();
         bool initFace(const char* ttf_font_file, unsigned int face_index = 0);
+        void getSize(unsigned int &width, unsigned int &height, const char* message);
+        bool getMsgRgbMat(color_t* rgb, const color_t color, unsigned int width, unsigned int height, const char* message);
 };
 
 #endif

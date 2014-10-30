@@ -89,7 +89,7 @@ void read_state(read_state_args_t *args)
 
             if (!get_scroll_args(document, scroll_args)) continue;
             
-            ptr = new TextMap(font_name, "x", rgb, scroll_args);
+            ptr = new TextMap(font_name, "xCdkasdfljLdafd", rgb, scroll_args);
         }
         else if (mode.compare("pixelmap") == 0)
         {
