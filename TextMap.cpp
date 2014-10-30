@@ -96,8 +96,8 @@ bool TextMap::getMsgRgbMat(color_t* rgb, const color_t color, unsigned int width
                 if(face->glyph->bitmap.buffer[h*bitmapWidth + w] == 255)
                 {
                     rgb[(height - bitmapHeight + h)*width + w + penX][0] = color[0];
-                    rgb[(height - bitmapHeight + h)*width + w + penX][1] = color[0];
-                    rgb[(height - bitmapHeight + h)*width + w + penX][1] = color[0];
+                    rgb[(height - bitmapHeight + h)*width + w + penX][1] = color[1];
+                    rgb[(height - bitmapHeight + h)*width + w + penX][2] = color[2];
                 }
             }
         }
