@@ -48,13 +48,12 @@ TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t c
     getMsgRgbMat(rgb, color, width, height, message);
     pixel_map = new PixelMap(width, height, rgb, scroll_args_in);
     delete[] rgb;
-
-    // TODO: either delete the face and library here, or do it in the destructor.
 }
 
 TextMap::~TextMap()
 {
-
+    FT_Done_FreeType(library);
+    delete pixel_map;
 }
 
 bool TextMap::getMsgRgbMat(color_t* rgb, const color_t color, unsigned int width, unsigned int height, const char* message)
