@@ -32,27 +32,31 @@
 
 TextMap::TextMap(const char* ttf_font_file, const char* message, const color_t color, const scroll_args_t scroll_args_in)
 {
-    initLibrary();
-    initFace(ttf_font_file);
+    pixel_map = 0;
+    if(initLibrary() && initFace(ttf_font_file))
+    {
+        // doesn't seem to like anything below 8 pixels.
+        // Change 8 to 16 to use the full height of the 16 pixel board
+        FT_Set_Pixel_Sizes(face, 0, 8);
+        unsigned int width;
+        unsigned int height;
+        getSize(width, height, message);
+        color_t *rgb = new color_t[width*height];
 
-    // doesn't seem to like anything below 8 pixels.
-    // Change 8 to 16 to use the full height of the 16 pixel board
-    FT_Set_Pixel_Sizes(face, 0, 8);
-    unsigned int width;
-    unsigned int height;
-    getSize(width, height, message);
-    color_t *rgb = new color_t[width*height];
-
-    // set everything to black
-    memset(rgb, 0, sizeof(color_t) * width * height);
-    getMsgRgbMat(rgb, color, width, height, message);
-    pixel_map = new PixelMap(width, height, rgb, scroll_args_in);
-    delete[] rgb;
+        // set everything to black
+        memset(rgb, 0, sizeof(color_t) * width * height);
+        getMsgRgbMat(rgb, color, width, height, message);
+        pixel_map = new PixelMap(width, height, rgb, scroll_args_in);
+        delete[] rgb;
+    }
 }
 
 TextMap::~TextMap()
 {
-    FT_Done_FreeType(library);
+    if(library != 0)
+    {
+        FT_Done_FreeType(library);
+    }
     delete pixel_map;
 }
 
