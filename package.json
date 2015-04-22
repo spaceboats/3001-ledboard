@@ -1,0 +1,24 @@
+{
+  "name": "3001-ledboard",
+  "version": "1.0.0",
+  "description": "Code for the LED board + Raspberry Pi in 3001 Eaton",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spaceboats/3001-ledboard"
+  },
+  "author": "spaceboats (https://spaceboats.github.io/)",
+  "license": "GPLv2",
+  "bugs": {
+    "url": "https://github.com/spaceboats/3001-ledboard/issues"
+  },
+  "homepage": "https://github.com/spaceboats/3001-ledboard",
+  "dependencies": {
+    "canvas": "^1.2.2",
+    "rpi-rgb-led-matrix": "git://github.com/spaceboats/node-rpi-rgb-led-matrix"
+  }
+}
