@@ -7,10 +7,34 @@ var bodyParser = require('body-parser');
 var canvas = require('canvas');
 var board = require('rpi-rgb-led-matrix');
 
+var myStateQueue = new stateQueue();
+
 function state(namespace, type, duration) {
   this.namespace = namespace;
   this.type = type;
   this.duration = duration;
+}
+
+function stateQueue() {
+  this.states = [];
+
+  this.insert = function (state, index) {
+    if (index == undefined) index = this.states.length;
+    console.log(this.states);
+    if (index <= this.states.length && index >= 0) {
+      this.states.splice(index, 0, state);
+    }
+    console.log(this.states);
+  }
+
+  this.removeNamespace = function (namespace) {
+    this.states.forEach( function (theState, theIndex, theArray) {
+      if (theState.namespace == namespace) {
+        theArray.splice(theIndex, 1);
+      }
+    console.log(this.states);
+    });
+  }
 }
 
 app = express();
@@ -80,6 +104,7 @@ app.post('/api/v1/insert', function(req, res) {
   console.log(req.body)
   if (req.body.scene == "string") {
     if (req.body.string) {
+      myStateQueue.insert("test", req.body.string, "10");
       stringCanvas(req.body.string);
       res.sendJSON('ok');
     }
@@ -89,5 +114,9 @@ app.post('/api/v1/insert', function(req, res) {
 });
 
 board.start(height, numBoards);
+
+var testStateQueue = new stateQueue();
+myStateQueue.insert(new state("permanent", "text", "500"));
+console.log(JSON.stringify(myStateQueue.states[0]));
 
 app.listen(80);
