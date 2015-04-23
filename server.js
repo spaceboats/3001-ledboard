@@ -7,6 +7,12 @@ var bodyParser = require('body-parser');
 var canvas = require('canvas');
 var board = require('rpi-rgb-led-matrix');
 
+function state(namespace, type, duration) {
+  this.namespace = namespace;
+  this.type = type;
+  this.duration = duration;
+}
+
 app = express();
 app.http().io();
 
@@ -26,22 +32,34 @@ app.use(function(req, res, next) {
 });
 
 function stringCanvas(displayString) {
-  var stringCanvas = new canvas(width, height);
+  var str = 'Senior Design';
+  var stringWidth = str.length * 15;
+  var stringCanvas = new canvas(stringWidth, height);
   var ctx = stringCanvas.getContext('2d');
-  ctx.font = "22px courier";
+  ctx.font = "22px monospace";
+
+  var shift = 4;
+  var offset = 0;
 
   setInterval(function() {
-    var str = 'Senior Design';
 
     ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, width, 16);
+    ctx.fillRect(0, 0, stringWidth, 16);
 
     ctx.fillStyle = "#00FF79";
     ctx.fillText(str, 0, height);
 
     board.drawCanvas(ctx, width, height);
+    if (offset > stringWidth) {
+      ctx.translate(offset+width, 0);
+      offset = -width;
+    }
+    else
+      ctx.translate(-shift, 0);
 
-  }, 1000)
+    offset += shift;
+
+  }, 25)
 }
 
 app.get('/', function(req, res) {
