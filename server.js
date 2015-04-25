@@ -9,7 +9,8 @@ var board = require('rpi-rgb-led-matrix');
 
 var myStateQueue = new stateQueue();
 
-function state(namespace, type, duration) {
+function state(namespace, type, duration, id) {
+  this.stateID = id;
   this.namespace = namespace;
   this.type = type;
   this.duration = duration;
@@ -17,24 +18,24 @@ function state(namespace, type, duration) {
 
 function stateQueue() {
   this.states = [];
+}
 
-  this.insert = function (state, index) {
-    if (index == undefined) index = this.states.length;
-    console.log(this.states);
-    if (index <= this.states.length && index >= 0) {
-      this.states.splice(index, 0, state);
+stateQueue.prototype.insert = function (state, index) {
+  if (index == undefined) index = this.states.length;
+  console.log(this.states);
+  if (index <= this.states.length && index >= 0) {
+    this.states.splice(index, 0, state);
+  }
+  console.log(this.states);
+}
+
+stateQueue.prototype.removeNamespace = function (namespace) {
+  this.states.forEach( function (theState, theIndex, theArray) {
+    if (theState.namespace == namespace) {
+      theArray.splice(theIndex, 1);
     }
     console.log(this.states);
-  }
-
-  this.removeNamespace = function (namespace) {
-    this.states.forEach( function (theState, theIndex, theArray) {
-      if (theState.namespace == namespace) {
-        theArray.splice(theIndex, 1);
-      }
-    console.log(this.states);
-    });
-  }
+  });
 }
 
 app = express();
@@ -102,12 +103,11 @@ app.post('/api/v1/fill', function(req, res) {
 
 app.post('/api/v1/insert', function(req, res) {
   console.log(req.body)
-  if (req.body.scene == "string") {
-    if (req.body.string) {
-      myStateQueue.insert("test", req.body.string, "10");
-      stringCanvas(req.body.string);
-      res.sendJSON('ok');
-    }
+  if (req.body.state == "text") {
+    console.log(JSON.stringify(req.body));
+    myStateQueue.insert(new state(req.body.namespace, req.body.type, req.body.duration, req.body.id));
+    stringCanvas(req.body.text);
+    res.sendJSON('ok');
   }
   else
     res.sendJSON('JSON Error', 400);
@@ -116,7 +116,7 @@ app.post('/api/v1/insert', function(req, res) {
 board.start(height, numBoards);
 
 var testStateQueue = new stateQueue();
-myStateQueue.insert(new state("permanent", "text", "500"));
+myStateQueue.insert(new state("permanent", "text", "500", "1"));
 console.log(JSON.stringify(myStateQueue.states[0]));
 
 app.listen(80);
