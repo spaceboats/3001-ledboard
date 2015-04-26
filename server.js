@@ -1,12 +1,18 @@
-var width = 96;
-var height = 16;
-var numBoards = 3;
-var defaultDuration = 5000;
+var width = 96,
+    height = 16,
+    numBoards = 3,
+    defaultDuration = 5000;
 
-var express = require('express.io');
-var bodyParser = require('body-parser');
-var canvas = require('canvas');
-var board = require('rpi-rgb-led-matrix');
+var app = require('express.io')(),
+    bodyParser = require('body-parser'),
+    swig = require('swig'),
+    canvas = require('canvas'),
+    board = require('rpi-rgb-led-matrix');
+
+app.engine('html', swig.renderFile);
+app.set('view engine', 'html');
+app.set('views', __dirname + '/views');
+
 
 var myStateQueue = new stateQueue();
 
@@ -76,7 +82,6 @@ stateQueue.prototype.print = function() {
   });
 }
 
-app = express();
 app.http().io();
 
 app.use(bodyParser.json());
@@ -132,8 +137,7 @@ function stringCanvas(displayString) {
 }
 
 app.get('/', function(req, res) {
-  res.status(200);
-  res.sendfile(__dirname + "/index.html");
+  res.render('index', {});
 });
 
 app.post('/api/v1/fill', function(req, res) {
