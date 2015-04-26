@@ -1,2 +1,4 @@
 curl -H "Content-Type: application/json" -X POST -d '{"color": [255, 0, 0]}' http://3001-ledboard.spaceboats.net/api/v1/fill
-curl -H "Content-Type: application/json" -X POST -d '{"scene":"string", "string":"Hello"}' http://3001-ledboard.spaceboats.net/api/v1/insert
+curl -H "Content-Type: application/json" -X POST -d '{"namespace":"spaceboats", "type":"text", "duration":"5000", "id":123}' http://3001-ledboard.spaceboats.net/api/v1/insert
+curl -H "Content-Type: application/json" -X POST -d '{"namespace":"spaceboats"}' http://3001-ledboard.spaceboats.net/api/v1/removenamespace
+curl -H "Content-Type: application/json" -X POST -d '{"namespace":"spaceboats"}' http://3001-ledboard.spaceboats.net/api/v1/removeid

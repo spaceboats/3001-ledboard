@@ -1,6 +1,7 @@
 var width = 96;
 var height = 16;
 var numBoards = 3;
+var defaultDuration = 5000;
 
 var express = require('express.io');
 var bodyParser = require('body-parser');
@@ -9,15 +10,19 @@ var board = require('rpi-rgb-led-matrix');
 
 var myStateQueue = new stateQueue();
 
+var changeStateInterval = setTimeout(myStateQueue.nextState, defaultDuration);
+
 function state(namespace, type, duration, id) {
-  this.stateID = id;
   this.namespace = namespace;
   this.type = type;
   this.duration = duration;
+  this.stateID = id;
 }
 
 function stateQueue() {
   this.states = [];
+  this.currentState = 0;
+  this.running = false;
 }
 
 stateQueue.prototype.insert = function (state, index) {
@@ -26,15 +31,48 @@ stateQueue.prototype.insert = function (state, index) {
   if (index <= this.states.length && index >= 0) {
     this.states.splice(index, 0, state);
   }
-  console.log(this.states);
+  if (index <= this.currentState)
+    this.currentState++;
 }
 
 stateQueue.prototype.removeNamespace = function (namespace) {
-  this.states.forEach( function (theState, theIndex, theArray) {
+  this.states.forEach(function (theState, theIndex, theArray) {
     if (theState.namespace == namespace) {
       theArray.splice(theIndex, 1);
+      if (theIndex <= this.currentState)
+        this.currentState--
     }
-    console.log(this.states);
+  });
+}
+
+stateQueue.prototype.removeID = function (id) {
+  this.states.forEach(function (theState, theIndex, theArray) {
+    if (theState.id == id) {
+      theArray.splice(theIndex, 1);
+      if (theIndex <= this.currentState)
+        this.currentState--
+    }
+  });
+}
+
+stateQueue.prototype.nextState = function() {
+  if (this.states.length > 0) {
+    if (this.currentState > this.states.length)
+      this.currentState = 0;
+    this.running = true;
+
+    if (this.states[currentState].type == "text") {
+      stringCanvas(this.states[currentState].text);
+    }
+
+    interval = setTimeout(stateQueue.nextState, states[currentState].duration);
+    this.currentState++;
+  }
+}
+
+stateQueue.prototype.print = function() {
+  this.states.forEach(function (theState, theIndex, theArray) {
+    console.log(theState);
   });
 }
 
@@ -45,6 +83,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true
 }));
+
+app.use(function(err, req, res, next) {
+  if(err.status == 400) {
+    console.error(err.stack);
+    res.status(400).send('bad request');
+  }
+});
 
 app.use(function(req, res, next) {
   res.sendJSON = function(obj, status) {
@@ -57,8 +102,7 @@ app.use(function(req, res, next) {
 });
 
 function stringCanvas(displayString) {
-  var str = 'Senior Design';
-  var stringWidth = str.length * 15;
+  var stringWidth = displayString.length * 15;
   var stringCanvas = new canvas(stringWidth, height);
   var ctx = stringCanvas.getContext('2d');
   ctx.font = "22px monospace";
@@ -72,7 +116,7 @@ function stringCanvas(displayString) {
     ctx.fillRect(0, 0, stringWidth, 16);
 
     ctx.fillStyle = "#00FF79";
-    ctx.fillText(str, 0, height);
+    ctx.fillText(displayString, 0, height);
 
     board.drawCanvas(ctx, width, height);
     if (offset > stringWidth) {
@@ -80,11 +124,11 @@ function stringCanvas(displayString) {
       offset = -width;
     }
     else
-      ctx.translate(-shift, 0);
+    ctx.translate(-shift, 0);
 
-    offset += shift;
+  offset += shift;
 
-  }, 25)
+  }, 25);
 }
 
 app.get('/', function(req, res) {
@@ -102,21 +146,25 @@ app.post('/api/v1/fill', function(req, res) {
 });
 
 app.post('/api/v1/insert', function(req, res) {
-  console.log(req.body)
-  if (req.body.state == "text") {
+  if (req.body.type == "text") {
     console.log(JSON.stringify(req.body));
-    myStateQueue.insert(new state(req.body.namespace, req.body.type, req.body.duration, req.body.id));
-    stringCanvas(req.body.text);
+    myStateQueue.insert(req.body)
     res.sendJSON('ok');
   }
   else
     res.sendJSON('JSON Error', 400);
 });
 
-board.start(height, numBoards);
+app.post('/api/v1/removenamespace', function(req, res) {
+  myStateQueue.removeNamespace(req.body.namespace);
+  res.sendJSON('ok');
+});
 
-var testStateQueue = new stateQueue();
-myStateQueue.insert(new state("permanent", "text", "500", "1"));
-console.log(JSON.stringify(myStateQueue.states[0]));
+app.post('/api/v1/removeid', function(req, res) {
+  myStateQueue.removeID(req.body.id);
+  res.sendJSON('ok');
+});
+
+board.start(height, numBoards);
 
 app.listen(80);
