@@ -1,7 +1,8 @@
 var width = 96,
     height = 16,
     numBoards = 3,
-    defaultDuration = 5000;
+    defaultDuration = 5000,
+    interval = undefined;
 
 var app = require('express.io')(),
     bodyParser = require('body-parser'),
@@ -16,11 +17,10 @@ app.set('views', __dirname + '/views');
 
 var myStateQueue = new stateQueue();
 
-var changeStateInterval = setTimeout(myStateQueue.nextState, defaultDuration);
-
-function state(namespace, type, duration, id) {
+function state(namespace, type, text, duration, id) {
   this.namespace = namespace;
   this.type = type;
+  this.text = text;
   this.duration = duration;
   this.stateID = id;
 }
@@ -33,7 +33,6 @@ function stateQueue() {
 
 stateQueue.prototype.insert = function (state, index) {
   if (index == undefined) index = this.states.length;
-  console.log(this.states);
   if (index <= this.states.length && index >= 0) {
     this.states.splice(index, 0, state);
   }
@@ -62,16 +61,18 @@ stateQueue.prototype.removeID = function (id) {
 }
 
 stateQueue.prototype.nextState = function() {
+  var self = this;
   if (this.states.length > 0) {
-    if (this.currentState > this.states.length)
+    if (this.currentState >= this.states.length)
       this.currentState = 0;
     this.running = true;
 
-    if (this.states[currentState].type == "text") {
-      stringCanvas(this.states[currentState].text);
+    if (this.states[this.currentState].type == "text") {
+      if (interval)
+        clearInterval(interval);
+      stringCanvas(this.states[this.currentState].text);
     }
-
-    interval = setTimeout(stateQueue.nextState, states[currentState].duration);
+    setTimeout(function() { self.nextState(); }, this.states[this.currentState].duration);
     this.currentState++;
   }
 }
@@ -115,7 +116,7 @@ function stringCanvas(displayString) {
   var shift = 4;
   var offset = 0;
 
-  setInterval(function() {
+  interval = setInterval(function() {
 
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, stringWidth, 16);
@@ -141,7 +142,6 @@ app.get('/', function(req, res) {
 });
 
 app.post('/api/v1/fill', function(req, res) {
-  console.log(req.body)
   if (req.body.color)
     board.fill(req.body.color[0], req.body.color[1], req.body.color[2]);
   else
@@ -151,8 +151,10 @@ app.post('/api/v1/fill', function(req, res) {
 
 app.post('/api/v1/insert', function(req, res) {
   if (req.body.type == "text") {
-    console.log(JSON.stringify(req.body));
     myStateQueue.insert(req.body)
+    myStateQueue.print();
+    if (!myStateQueue.running)
+      myStateQueue.nextState();
     res.sendJSON('ok');
   }
   else
@@ -170,5 +172,7 @@ app.post('/api/v1/removeid', function(req, res) {
 });
 
 board.start(height, numBoards);
+
+console.log("ready");
 
 app.listen(80);
