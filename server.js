@@ -14,15 +14,35 @@ app.engine('html', swig.renderFile);
 app.set('view engine', 'html');
 app.set('views', __dirname + '/views');
 
-
 var myStateQueue = new stateQueue();
 
-function state(namespace, type, text, duration, id) {
-  this.namespace = namespace;
-  this.type = type;
-  this.text = text;
-  this.duration = duration;
-  this.stateID = id;
+function state(obj) {
+  if (obj.namespace === undefined) throw new Error("Missing namespace property");
+  if (obj.type === undefined) throw new Error("Missing type property");
+  if (obj.stateID === undefined) throw new Error("Missing stateID property");
+  else if (obj.type == 'text') return new textstate(obj);
+  else if (obj.type == 'png') return new pngstate(obj);
+}
+
+function textstate(obj) {
+  if (obj.text === undefined) throw new Error("Mising text property");
+  this.namespace = obj.namespace;
+  this.type = obj.type;
+  this.stateID = obj.stateID;
+  this.text = obj.text;
+  this.duration = defaultDuration;
+}
+
+function pngstate(obj) {
+  if (obj.data === undefined) throw new Error("Mising data property");
+  this.namespace = obj.namespace;
+  this.type = obj.type;
+  this.stateID = obj.id;
+  this.data = obj.data;
+  if (obj.duration)
+    this.duration = obj.duration;
+  else
+    this.duration = defaultDuration;
 }
 
 function stateQueue() {
@@ -31,10 +51,10 @@ function stateQueue() {
   this.running = false;
 }
 
-stateQueue.prototype.insert = function (state, index) {
-  if (index == undefined) index = this.states.length;
+stateQueue.prototype.insert = function (reqState, index) {
+  if (index === undefined) index = this.states.length;
   if (index <= this.states.length && index >= 0) {
-    this.states.splice(index, 0, state);
+    this.states.splice(index, 0, reqState);
   }
   if (index <= this.currentState)
     this.currentState++;
@@ -93,7 +113,10 @@ app.use(bodyParser.urlencoded({
 app.use(function(err, req, res, next) {
   if(err.status == 400) {
     console.error(err.stack);
-    res.status(400).send('bad request');
+    res.status(400).sendJSON({
+      'status': 'error',
+      'error_msg': err.stack,
+    });
   }
 });
 
@@ -146,29 +169,26 @@ app.post('/api/v1/fill', function(req, res) {
     board.fill(req.body.color[0], req.body.color[1], req.body.color[2]);
   else
     board.fill(255, 255, 255);
-  res.sendJSON('ok');
+  res.sendJSON({'status': 'ok'});
 });
 
 app.post('/api/v1/insert', function(req, res) {
-  if (req.body.type == "text") {
-    myStateQueue.insert(req.body)
-    myStateQueue.print();
-    if (!myStateQueue.running)
-      myStateQueue.nextState();
-    res.sendJSON('ok');
+  myStateQueue.insert(new state(req.body));
+  myStateQueue.print();
+  if (!myStateQueue.running) {
+    myStateQueue.nextState();
   }
-  else
-    res.sendJSON('JSON Error', 400);
+  res.sendJSON({'status': 'ok'});
 });
 
 app.post('/api/v1/removenamespace', function(req, res) {
   myStateQueue.removeNamespace(req.body.namespace);
-  res.sendJSON('ok');
+  res.sendJSON({'status': 'ok'});
 });
 
 app.post('/api/v1/removeid', function(req, res) {
   myStateQueue.removeID(req.body.id);
-  res.sendJSON('ok');
+  res.sendJSON({'status': 'ok'});
 });
 
 board.start(height, numBoards);
