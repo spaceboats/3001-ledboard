@@ -2,19 +2,48 @@ var width = 96,
     height = 16,
     numBoards = 3,
     defaultDuration = 5000,
-    interval = undefined;
+    dateCanvas = undefined,
+    timeCanvas = undefined;
 
 var app = require('express.io')(),
     bodyParser = require('body-parser'),
     swig = require('swig'),
-    canvas = require('canvas'),
-    board = require('rpi-rgb-led-matrix');
+    Canvas = require('canvas'),
+    Font = Canvas.Font,
+    path = require('path'),
+    board = require('rpi-rgb-led-matrix'),
+    moment = require('moment');
 
 app.engine('html', swig.renderFile);
 app.set('view engine', 'html');
 app.set('views', __dirname + '/views');
 
 var myStateQueue = new stateQueue();
+
+var font = new Font('PixelMix', path.join(__dirname, 'fonts', 'pixelmix', 'pixelmix.ttf'));
+
+function renderText(text, color) {
+  if (color === undefined) color = 'red';
+  var canvas = new Canvas(1, 8);
+  var ctx = canvas.getContext('2d');
+  ctx.font = '8px PixelMix';
+  canvas.width = ctx.measureText(text).width;
+  ctx.fillStyle = color;
+  ctx.fillText(text, 0, 8);
+  return canvas;
+}
+
+function renderDateCanvas() {
+  var now = moment();
+  dateCanvas = renderText(now.format('MMM DD'));
+  setTimeout(renderDateCanvas, moment().add(1, 'day').startOf('day') - moment() + 100);
+}
+
+function renderTimeCanvas() {
+  var now = moment();
+  timeCanvas = renderText(now.format('HH:mm'));
+  setTimeout(renderTimeCanvas, moment().add(1, 'minute').startOf('minute') - moment() + 100);
+}
 
 function state(obj) {
   if (obj.namespace === undefined) throw new Error("Missing namespace property");
@@ -30,7 +59,53 @@ function textstate(obj) {
   this.type = obj.type;
   this.stateID = obj.stateID;
   this.text = obj.text;
-  this.duration = defaultDuration;
+  this.color = obj.color === undefined ? 'red' : obj.color;
+
+  /* Render the text to a canvas */
+  this._textCanvas = renderText(this.text, this.color);
+  this._scrolling = this._textCanvas.width > width;
+  if (this._scrolling)
+    this.duration = 2000 + (50 * (this._textCanvas.width - width + 32));
+  else
+    this.duration = defaultDuration;
+}
+
+textstate.prototype.render = function () {
+  var self = this;
+  self._offset = 2;
+
+  self._tickTimeout = undefined;
+
+  function tick() {
+    clearTimeout(self._tickTimeout);
+    if (self._scrolling) {
+      self._offset -= 2;
+      if (self._offset == 0)
+        // pause for 2 seconds so the beginning of the text can be read
+        self._tickTimeout = setTimeout(tick, 2000);
+      else
+        self._tickTimeout = setTimeout(tick, 100);
+    }
+
+    var canvas = new Canvas(width, height);
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(dateCanvas, 0, 0);
+    ctx.drawImage(timeCanvas, width - timeCanvas.width, 0);
+
+    if (self._scrolling) {
+      ctx.drawImage(self._textCanvas, self._offset, 8);
+    } else {
+      ctx.drawImage(self._textCanvas, Math.floor((width - self._textCanvas.width) / 2), 8);
+    }
+
+    board.drawCanvas(ctx, width, height);
+  }
+
+  tick();
+}
+
+textstate.prototype.finish = function () {
+  clearTimeout(this._tickTimeout);
 }
 
 function pngstate(obj) {
@@ -82,18 +157,28 @@ stateQueue.prototype.removeID = function (id) {
 
 stateQueue.prototype.nextState = function() {
   var self = this;
-  if (this.states.length > 0) {
-    if (this.currentState >= this.states.length)
-      this.currentState = 0;
-    this.running = true;
 
-    if (this.states[this.currentState].type == "text") {
-      if (interval)
-        clearInterval(interval);
-      stringCanvas(this.states[this.currentState].text);
+  if (this.states.length > 0) {
+    this.running = true;
+    var next = this.currentState + 1;
+    if (next >= this.states.length)
+      next = 0;
+
+    if (this.currentState != next) {
+      this.currentState = next;
     }
-    setTimeout(function() { self.nextState(); }, this.states[this.currentState].duration);
-    this.currentState++;
+
+    this.states[this.currentState].render();
+
+    var curState = this.states[this.currentState];
+    this._nextStateTimeout = setTimeout(function () {
+      if (curState.finish)
+        curState.finish();
+      self.nextState();
+    }, this.states[this.currentState].duration);
+  } else {
+    board.fill(0, 0, 0);
+    this.running = false;
   }
 }
 
@@ -130,36 +215,6 @@ app.use(function(req, res, next) {
   next();
 });
 
-function stringCanvas(displayString) {
-  var stringWidth = displayString.length * 15;
-  var stringCanvas = new canvas(stringWidth, height);
-  var ctx = stringCanvas.getContext('2d');
-  ctx.font = "22px monospace";
-
-  var shift = 4;
-  var offset = 0;
-
-  interval = setInterval(function() {
-
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, stringWidth, 16);
-
-    ctx.fillStyle = "#00FF79";
-    ctx.fillText(displayString, 0, height);
-
-    board.drawCanvas(ctx, width, height);
-    if (offset > stringWidth) {
-      ctx.translate(offset+width, 0);
-      offset = -width;
-    }
-    else
-    ctx.translate(-shift, 0);
-
-  offset += shift;
-
-  }, 25);
-}
-
 app.get('/', function(req, res) {
   res.render('index', {});
 });
@@ -174,7 +229,7 @@ app.post('/api/v1/fill', function(req, res) {
 
 app.post('/api/v1/insert', function(req, res) {
   myStateQueue.insert(new state(req.body));
-  myStateQueue.print();
+  // myStateQueue.print();
   if (!myStateQueue.running) {
     myStateQueue.nextState();
   }
@@ -192,6 +247,9 @@ app.post('/api/v1/removeid', function(req, res) {
 });
 
 board.start(height, numBoards);
+
+renderDateCanvas();
+renderTimeCanvas();
 
 console.log("ready");
 

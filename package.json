@@ -22,6 +22,7 @@
     "canvas": "^1.2.2",
     "express.io": "^1.1.13",
     "rpi-rgb-led-matrix": "git://github.com/spaceboats/node-rpi-rgb-led-matrix#1.1.1",
-    "swig": "^1.4.2"
+    "swig": "^1.4.2",
+    "moment": "~2.10.2"
   }
 }
