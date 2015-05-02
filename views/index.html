@@ -303,17 +303,21 @@
                 };
 
                 var get_namespace = function (e) {
-                    console.log("element: ", e);
-                    console.log("value: ", e.val());
-                    namespace = $(e).data('namespace-string');
+                    var namespace = $(e.target).find('#namespace-string')[0].value;
                     console.log("namespace: ", namespace);
                     if (namespace) { return namespace; }
                 }
 
-                var get_text = function (element) {
-                    text = $(element).data('text');
+                var get_text = function (e) {
+                    var text = $(e.target).find('#text-string')[0].value;
                     console.log("text: ", text);
                     if (text) { return text; }
+                }
+
+                var get_id = function (e) {
+                    var id = $(e.target).find('#id-string')[0].value;
+                    console.log("id: ", id);
+                    if (id) { return id; }
                 }
 
                 var get_magic = function (element) {
@@ -333,11 +337,14 @@
 
                 $('#tab-text form').submit(function (e) {
                     e.preventDefault();
-                    post_state({ 'type': 'text', 'namespace': get_namespace($(e.target).find('.namespace-string').first()), 'text': get_text(e)}, e.target);
+                    console.log("namespace: ", $(e.target).find('#namespace-string')[0].value);
+                    console.log("text: ", $(e.target).find('#text-string')[0].value);
+                    console.log("state ID: ", $(e.target).find('#id-string')[0].value);
+                    post_state({ 'type': 'text', 'namespace': get_namespace(e), 'text': get_text(e), 'stateID': get_id(e)}, e.target);
                 });
                 $('#tab-png form').submit(function (e) {
                     e.preventDefault();
-                    post_state({ 'type': 'png', 'namespace': get_namespace(e), 'png': get_magic(e) }, e.target);
+                    post_state({ 'type': 'png', 'namespace': get_namespace(e), 'png': get_magic(e), 'stateID': get_id(e) }, e.target);
                 });
                 $('#tab-fill form').submit(function (e) {
                     e.preventDefault();
