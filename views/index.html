@@ -1,53 +1,204 @@
-{% extends "_base.html" %}
-{% block bodycss%}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>LED board controller</title>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://mjolnic.github.io/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.min.css" rel="stylesheet">
 
-    *{
-		margin: 0;
-    }
+        <style>
+            h1 {
+                margin-bottom: 30px;
+            }
 
-    body{
-		height: 100%;
-    }
+            .tab-content {
+                margin-top: 15px;
+            }
 
-    .wrapper{
-		min-height: 500px;
-		height: auto !important;
-		height: 100%;
-		margin: 0 auto -4em;
-    }
+            .after-button {
+                margin-left: 15px;
+                vertical-align: middle;
+                line-height: 1;
+                opacity: 0;
+            }
 
-    #banner{
-        width:1200px;
-        height:500px;
-        text-align:left;
-        border-radius:5px;
-        margin:50px auto auto;
-        padding:20px;
-        padding-left:20px;
-        background-image:url("/static/busroutes.jpg");
-        background-repeat:no-repeat;
-    }
+            .glyphicon-refresh-animate {
+                transform-origin: 50% 42%;
+                -webkit-animation: spinner 1500ms infinite linear;
+                -moz-animation: spinner 1500ms infinite linear;
+                -ms-animation: spinner 1500ms infinite linear;
+                -o-animation: spinner 1500ms infinite linear;
+                animation: spinner 1500ms infinite linear;
+            }
 
-    .push{
-		height: 4em;
-    }
+            @-webkit-keyframes spinner {
+                0% { -webkit-transform: rotate(0deg); }
+                100% { -webkit-transform: rotate(360deg); }
+            }
 
-{% endblock %}
-{% block body %}
-	<body>
-		<div class="wrapper">
-			<div id="banner">
-				<h1>busbus</h1>
-			</div>
-			<div class="push"></div>
-		</div>
-		<div class="navbar">
-			<nav class="menu">
-				<ul class="clearfix">
-					<li><a href="https://github.com/spaceboats/busbus">github repo</a></li>
-				</ul>
-			</nav>
-		</div>
-	</body>
-{% endblock %}
-{# vim: set syn=htmldjango: #}
+            @-moz-keyframes spinner {
+                0% { -moz-transform: rotate(0deg); }
+
+                100% { -moz-transform: rotate(360deg); }
+            }
+
+            @-o-keyframes spinner {
+                0% { -o-transform: rotate(0deg); }
+
+                100% { -o-transform: rotate(360deg); }
+            }
+
+            @keyframes spinner {
+                0% {
+                    -webkit-transform: rotate(0deg);
+                    -moz-transform: rotate(0deg);
+                    -ms-transform: rotate(0deg);
+                    -o-transform: rotate(0deg);
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    -webkit-transform: rotate(360deg);
+                    -moz-transform: rotate(360deg);
+                    -ms-transform: rotate(360deg);
+                    -o-transform: rotate(360deg);
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+
+            <h1>LED board controller</h1>
+
+            <!-- Nav tabs -->
+            <ul id="navtabs" class="nav nav-tabs" role="tablist">
+                <li class="active"><a href="#tab-fill" role="tab" data-toggle="tab">Color fill</a></li>
+                <li><a href="#tab-png" role="tab" data-toggle="tab">Image upload</a></li>
+                <li><a href="#tab-conway" role="tab" data-toggle="tab">Conway's Game of Life</a></li>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content">
+                <div class="tab-pane active" id="tab-fill">
+                    <form id="form-fill" class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label for="fill-color" class="col-sm-2 control-label">Color</label>
+                            <div class="col-sm-2">
+                                <div class="input-group fill-color">
+                                    <input type="text" class="form-control" id="fill-color" value="#000000" />
+                                    <span class="input-group-addon"><i></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary">Go!</button>
+                                <span class="after-button"></span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane" id="tab-png">
+                </div>
+                <div class="tab-pane" id="tab-conway">
+                    <form id="form-conway" class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label for="conway-color" class="col-sm-2 control-label">Color</label>
+                            <div class="col-sm-2">
+                                <div class="input-group conway-color">
+                                    <input type="text" class="form-control" id="conway-color" value="#ff0000" />
+                                    <span class="input-group-addon"><i></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary">Go!</button>
+                                <span class="after-button"></span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+        <script src="https://mjolnic.github.io/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.min.js"></script>
+        <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+        <script src="ie10-viewport-bug-workaround.js"></script>
+
+        <script>
+            $(function () {
+                var clear_progress = function () {
+                    $('.after-button').removeClass('text-success').removeClass('text-danger').html('');
+                };
+
+                var post_state = function (state, target) {
+                    var after = $(target).find('.after-button');
+
+                    var func = function (resp) {
+                        var msg;
+
+                        clear_progress();
+
+                        if (resp.status == 'ok') {
+                            msg = '<i class="glyphicon glyphicon-ok"></i> Success';
+                            after.addClass('text-success');
+                        } else {
+                            msg = '<i class="glyphicon glyphicon-remove"></i> Failed';
+                            after.addClass('text-danger');
+                        }
+                        if (resp.data) {
+                            msg += ': ' + resp.data;
+                        }
+
+                        after.html(msg);
+                        setInterval(function () { after.fadeTo(200, 0); }, 3000);
+                    };
+
+                    clear_progress();
+                    after.html('<i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i>');
+                    after.fadeTo(0, 1);
+
+                    $.ajax({
+                        url: '/state',
+                        type: 'POST',
+                        data: JSON.stringify(state),
+                        success: func,
+                        error: function (jqXHR, textStatus, errorThrown) { func({ 'status': 'fail', 'data': errorThrown }); },
+                        dataType: 'json',
+                        contentType: 'application/json'
+                    });
+                };
+
+                var get_color = function (element) {
+                    color = $(element).data('color');
+                    if (color) { return color.substr(1); }
+                };
+
+                $('#navtabs a').click(function (e) {
+                    e.preventDefault();
+                    $(this).tab('show');
+                });
+
+                $('.input-group.fill-color').colorpicker({'format': 'hex'});
+                $('.input-group.conway-color').colorpicker({'format': 'hex'});
+
+                $('#tab-fill form').submit(function (e) {
+                    e.preventDefault();
+                    post_state({ 'mode': 'fill', 'color': get_color($(e.target).find('.fill-color').first()) }, e.target);
+                });
+                $('#tab-conway form').submit(function (e) {
+                    e.preventDefault();
+                    post_state({ 'mode': 'conway', 'color': get_color($(e.target).find('.conway-color').first()) }, e.target);
+                });
+            });
+        </script>
+    </body>
+</html>
