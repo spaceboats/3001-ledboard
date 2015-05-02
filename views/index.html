@@ -76,14 +76,100 @@
 
             <!-- Nav tabs -->
             <ul id="navtabs" class="nav nav-tabs" role="tablist">
-                <li class="active"><a href="#tab-fill" role="tab" data-toggle="tab">Color fill</a></li>
+                <li class="active"><a href="#tab-text" role="tab" data-toggle="tab">Text</a></li>
+                <li><a href="#tab-fill" role="tab" data-toggle="tab">Color fill</a></li>
                 <li><a href="#tab-png" role="tab" data-toggle="tab">Image upload</a></li>
                 <li><a href="#tab-conway" role="tab" data-toggle="tab">Conway's Game of Life</a></li>
             </ul>
 
             <!-- Tab panes -->
             <div class="tab-content">
-                <div class="tab-pane active" id="tab-fill">
+                <div class="tab-pane active" id="tab-text">
+                    <form id="form-fill" class="form-horizontal" role="form">
+                        <div class="form-group">
+                          <label for="namespace-string" class="col-sm-2 control-label">Namespace</label>
+                            <div class="col-sm-2">
+                                <div class="input-group namespace-string">
+                                    <input type="text" class="form-control" id="namespace-string" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="id-string" class="col-sm-2 control-label">State ID</label>
+                            <div class="col-sm-2">
+                                <div class="input-group id-string">
+                                    <input type="text" class="form-control" id="id-string" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="text-string" class="col-sm-2 control-label">Text</label>
+                            <div class="col-sm-2">
+                                <div class="input-group text-string">
+                                    <input type="text" class="form-control" id="text-string" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="text-color" class="col-sm-2 control-label">Color</label>
+                            <div class="col-sm-2">
+                                <div class="input-group text-color">
+                                    <input type="text" class="form-control" id="text-color" value="#000000" />
+                                    <span class="input-group-addon"><i></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary">Go!</button>
+                                <span class="after-button"></span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane" id="tab-png">
+                    <form id="form-fill" class="form-horizontal" role="form">
+                        <div class="form-group">
+                          <label for="namespace-string" class="col-sm-2 control-label">Namespace</label>
+                            <div class="col-sm-2">
+                                <div class="input-group namespace-string">
+                                    <input type="text" class="form-control" id="namespace-string" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="id-string" class="col-sm-2 control-label">State ID</label>
+                            <div class="col-sm-2">
+                                <div class="input-group id-string">
+                                    <input type="text" class="form-control" id="id-string" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="text-string" class="col-sm-2 control-label">Text</label>
+                            <div class="col-sm-2">
+                                <div class="input-group text-string">
+                                    <input type="text" class="form-control" id="text-string" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="text-color" class="col-sm-2 control-label">Color</label>
+                            <div class="col-sm-2">
+                                <div class="input-group text-color">
+                                    <input type="text" class="form-control" id="text-color" value="#000000" />
+                                    <span class="input-group-addon"><i></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary">Go!</button>
+                                <span class="after-button"></span>
+                            </div>
+                        </div>
+                </div>
+                <div class="tab-pane" id="tab-fill">
                     <form id="form-fill" class="form-horizontal" role="form">
                         <div class="form-group">
                             <label for="fill-color" class="col-sm-2 control-label">Color</label>
@@ -101,8 +187,6 @@
                             </div>
                         </div>
                     </form>
-                </div>
-                <div class="tab-pane" id="tab-png">
                 </div>
                 <div class="tab-pane" id="tab-conway">
                     <form id="form-conway" class="form-horizontal" role="form">
@@ -131,7 +215,7 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
         <script src="https://mjolnic.github.io/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.min.js"></script>
         <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-        <script src="ie10-viewport-bug-workaround.js"></script>
+        <script src="/views/ie10-viewport-bug-workaround.js"></script>
 
         <script>
             $(function () {
@@ -167,7 +251,7 @@
                     after.fadeTo(0, 1);
 
                     $.ajax({
-                        url: '/state',
+                        url: '/api/v1/insert',
                         type: 'POST',
                         data: JSON.stringify(state),
                         success: func,
@@ -177,10 +261,66 @@
                     });
                 };
 
+                var post_fill = function (target) {
+                    var after = $(target).find('.after-button');
+
+                    var func = function (resp) {
+                        var msg;
+
+                        clear_progress();
+
+                        if (resp.status == 'ok') {
+                            msg = '<i class="glyphicon glyphicon-ok"></i> Success';
+                            after.addClass('text-success');
+                        } else {
+                            msg = '<i class="glyphicon glyphicon-remove"></i> Failed';
+                            after.addClass('text-danger');
+                        }
+                        if (resp.data) {
+                            msg += ': ' + resp.data;
+                        }
+
+                        after.html(msg);
+                        setInterval(function () { after.fadeTo(200, 0); }, 3000);
+                    };
+
+                    clear_progress();
+                    after.html('<i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i>');
+                    after.fadeTo(0, 1);
+
+                    $.ajax({
+                        url: '/api/v1/fill',
+                        type: 'POST',
+                        success: func,
+                        error: function (jqXHR, textStatus, errorThrown) { func({ 'status': 'fail', 'data': errorThrown }); },
+                    });
+                };
+
                 var get_color = function (element) {
                     color = $(element).data('color');
+                    console.log("color: ", color);
                     if (color) { return color.substr(1); }
                 };
+
+                var get_namespace = function (e) {
+                    console.log("element: ", e);
+                    console.log("value: ", e.val());
+                    namespace = $(e).data('namespace-string');
+                    console.log("namespace: ", namespace);
+                    if (namespace) { return namespace; }
+                }
+
+                var get_text = function (element) {
+                    text = $(element).data('text');
+                    console.log("text: ", text);
+                    if (text) { return text; }
+                }
+
+                var get_magic = function (element) {
+                    magic = $(element).data('magic');
+                    console.log("magic: ", magic);
+                    if (magic) { return magic; }
+                }
 
                 $('#navtabs a').click(function (e) {
                     e.preventDefault();
@@ -189,10 +329,19 @@
 
                 $('.input-group.fill-color').colorpicker({'format': 'hex'});
                 $('.input-group.conway-color').colorpicker({'format': 'hex'});
+                $('.input-group.text-color').colorpicker({'format': 'hex'});
 
+                $('#tab-text form').submit(function (e) {
+                    e.preventDefault();
+                    post_state({ 'type': 'text', 'namespace': get_namespace($(e.target).find('.namespace-string').first()), 'text': get_text(e)}, e.target);
+                });
+                $('#tab-png form').submit(function (e) {
+                    e.preventDefault();
+                    post_state({ 'type': 'png', 'namespace': get_namespace(e), 'png': get_magic(e) }, e.target);
+                });
                 $('#tab-fill form').submit(function (e) {
                     e.preventDefault();
-                    post_state({ 'mode': 'fill', 'color': get_color($(e.target).find('.fill-color').first()) }, e.target);
+                    post_fill(e.target);
                 });
                 $('#tab-conway form').submit(function (e) {
                     e.preventDefault();
