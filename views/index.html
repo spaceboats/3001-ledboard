@@ -77,8 +77,10 @@
             <!-- Nav tabs -->
             <ul id="navtabs" class="nav nav-tabs" role="tablist">
                 <li class="active"><a href="#tab-text" role="tab" data-toggle="tab">Text</a></li>
-                <li><a href="#tab-fill" role="tab" data-toggle="tab">Color fill</a></li>
                 <li><a href="#tab-png" role="tab" data-toggle="tab">Image upload</a></li>
+                <li><a href="#tab-delete-namespace" role="tab" data-toggle="tab">Delete Namespace</a></li>
+                <li><a href="#tab-delete-id" role="tab" data-toggle="tab">Delete State</a></li>
+                <li><a href="#tab-fill" role="tab" data-toggle="tab">Color fill</a></li>
                 <li><a href="#tab-conway" role="tab" data-toggle="tab">Conway's Game of Life</a></li>
             </ul>
 
@@ -114,7 +116,7 @@
                           <label for="text-color" class="col-sm-2 control-label">Color</label>
                             <div class="col-sm-2">
                                 <div class="input-group text-color">
-                                    <input type="text" class="form-control" id="text-color" value="#000000" />
+                                    <input type="text" class="form-control" id="text-color" value="#FFFFFF" />
                                     <span class="input-group-addon"><i></i></span>
                                 </div>
                             </div>
@@ -157,7 +159,7 @@
                           <label for="text-color" class="col-sm-2 control-label">Color</label>
                             <div class="col-sm-2">
                                 <div class="input-group text-color">
-                                    <input type="text" class="form-control" id="text-color" value="#000000" />
+                                    <input type="text" class="form-control" id="text-color" value="#FFFFFF" />
                                     <span class="input-group-addon"><i></i></span>
                                 </div>
                             </div>
@@ -168,6 +170,43 @@
                                 <span class="after-button"></span>
                             </div>
                         </div>
+                    </form>
+                </div>
+                <div class="tab-pane" id="tab-delete-namespace">
+                    <form id="form-fill" class="form-horizontal" role="form">
+                        <div class="form-group">
+                          <label for="namespace-string" class="col-sm-2 control-label">Namespace To Delete</label>
+                            <div class="col-sm-2">
+                                <div class="input-group namespace-string">
+                                    <input type="text" class="form-control" id="namespace-string" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary">Go!</button>
+                                <span class="after-button"></span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane" id="tab-delete-id">
+                    <form id="form-fill" class="form-horizontal" role="form">
+                        <div class="form-group">
+                          <label for="id-string" class="col-sm-2 control-label">State ID To Delete</label>
+                            <div class="col-sm-2">
+                                <div class="input-group id-string">
+                                    <input type="text" class="form-control" id="id-string" value="" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-primary">Go!</button>
+                                <span class="after-button"></span>
+                            </div>
+                        </div>
+                    </form>
                 </div>
                 <div class="tab-pane" id="tab-fill">
                     <form id="form-fill" class="form-horizontal" role="form">
@@ -175,7 +214,7 @@
                             <label for="fill-color" class="col-sm-2 control-label">Color</label>
                             <div class="col-sm-2">
                                 <div class="input-group fill-color">
-                                    <input type="text" class="form-control" id="fill-color" value="#000000" />
+                                    <input type="text" class="form-control" id="fill-color" value="#FFFFFF" />
                                     <span class="input-group-addon"><i></i></span>
                                 </div>
                             </div>
@@ -223,7 +262,8 @@
                     $('.after-button').removeClass('text-success').removeClass('text-danger').html('');
                 };
 
-                var post_state = function (state, target) {
+                var post_state = function (state, target, endpoint) {
+                    if(endpoint === undefined) { endpoint = '/insert'; }
                     var after = $(target).find('.after-button');
 
                     var func = function (resp) {
@@ -251,7 +291,7 @@
                     after.fadeTo(0, 1);
 
                     $.ajax({
-                        url: '/api/v1/insert',
+                        url: '/api/v1' + endpoint,
                         type: 'POST',
                         data: JSON.stringify(state),
                         success: func,
@@ -296,10 +336,10 @@
                     });
                 };
 
-                var get_color = function (element) {
-                    color = $(element).data('color');
+                var get_color = function (e) {
+                    var color = $(e.target).find('#text-color')[0].value;
                     console.log("color: ", color);
-                    if (color) { return color.substr(1); }
+                    if (color) { return color; }
                 };
 
                 var get_namespace = function (e) {
@@ -340,20 +380,30 @@
                     console.log("namespace: ", $(e.target).find('#namespace-string')[0].value);
                     console.log("text: ", $(e.target).find('#text-string')[0].value);
                     console.log("state ID: ", $(e.target).find('#id-string')[0].value);
-                    post_state({ 'type': 'text', 'namespace': get_namespace(e), 'text': get_text(e), 'stateID': get_id(e)}, e.target);
+                    post_state({ 'type': 'text', 'namespace': get_namespace(e), 'text': get_text(e), 'stateID': get_id(e), 'color': get_color(e)}, e.target);
                 });
                 $('#tab-png form').submit(function (e) {
                     e.preventDefault();
                     post_state({ 'type': 'png', 'namespace': get_namespace(e), 'png': get_magic(e), 'stateID': get_id(e) }, e.target);
                 });
+                $('#tab-delete-namespace form').submit(function (e) {
+                    e.preventDefault();
+                    post_state({ 'namespace': get_namespace(e) }, e.target, "/removenamespace");
+                });
+                $('#tab-delete-id form').submit(function (e) {
+                    e.preventDefault();
+                    post_state({ 'stateID': get_id(e) }, e.target, "/removeid");
+                });
                 $('#tab-fill form').submit(function (e) {
                     e.preventDefault();
                     post_fill(e.target);
                 });
+                /*
                 $('#tab-conway form').submit(function (e) {
                     e.preventDefault();
                     post_state({ 'mode': 'conway', 'color': get_color($(e.target).find('.conway-color').first()) }, e.target);
                 });
+                */
             });
         </script>
     </body>
