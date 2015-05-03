@@ -5,18 +5,14 @@ var width = 96,
     dateCanvas = undefined,
     timeCanvas = undefined;
 
-var app = require('express.io')(),
+var express = require('express.io'),
+    app = express(),
     bodyParser = require('body-parser'),
-    swig = require('swig'),
     Canvas = require('canvas'),
     Font = Canvas.Font,
     path = require('path'),
     board = require('rpi-rgb-led-matrix'),
     moment = require('moment');
-
-app.engine('html', swig.renderFile);
-app.set('view engine', 'html');
-app.set('views', __dirname + '/views');
 
 var myStateQueue = new stateQueue();
 
@@ -190,6 +186,7 @@ stateQueue.prototype.print = function() {
 
 app.http().io();
 
+app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true

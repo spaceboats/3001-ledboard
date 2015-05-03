@@ -19,11 +19,9 @@
   "homepage": "https://github.com/spaceboats/3001-ledboard",
   "dependencies": {
     "body-parser": "^1.12.3",
-    "bootstrap": "^3.3.4",
     "canvas": "^1.2.2",
     "express.io": "^1.1.13",
     "moment": "~2.10.2",
-    "rpi-rgb-led-matrix": "git://github.com/spaceboats/node-rpi-rgb-led-matrix#1.1.1",
-    "swig": "^1.4.2"
+    "rpi-rgb-led-matrix": "git://github.com/spaceboats/node-rpi-rgb-led-matrix#1.1.1"
   }
 }
