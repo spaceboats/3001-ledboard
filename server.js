@@ -42,9 +42,10 @@ function renderTimeCanvas() {
 }
 
 function state(obj) {
+  obj.stateID = (function generateUIDNotMoreThan1million() {
+    return ("0000" + (Math.random()*Math.pow(36,4) << 0).toString(36)).slice(-4); })();
   if (obj.namespace === undefined) throw new Error("Missing namespace property");
   if (obj.type === undefined) throw new Error("Missing type property");
-  if (obj.stateID === undefined) throw new Error("Missing stateID property");
   else if (obj.type == 'text') return new textstate(obj);
   else if (obj.type == 'png') return new pngstate(obj);
 }
@@ -129,6 +130,7 @@ stateQueue.prototype.insert = function (reqState, index) {
   }
   if (index <= this.currentState)
     this.currentState++;
+  return reqState.stateID;
 }
 
 stateQueue.prototype.removeNamespace = function (namespace) {
@@ -227,12 +229,12 @@ app.post('/api/v1/fill', function(req, res) {
 });
 
 app.post('/api/v1/insert', function(req, res) {
-  myStateQueue.insert(new state(req.body));
+  var id = myStateQueue.insert(new state(req.body));
   // myStateQueue.print();
   if (!myStateQueue.running) {
     myStateQueue.nextState();
   }
-  res.sendJSON({'status': 'ok'});
+  res.sendJSON({'status': 'ok', 'stateID': id});
 });
 
 app.post('/api/v1/removenamespace', function(req, res) {
