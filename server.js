@@ -132,23 +132,25 @@ stateQueue.prototype.insert = function (reqState, index) {
 }
 
 stateQueue.prototype.removeNamespace = function (namespace) {
-  this.states.forEach(function (theState, theIndex, theArray) {
-    if (theState.namespace == namespace) {
-      theArray.splice(theIndex, 1);
-      if (theIndex <= this.currentState)
+  var i = this.states.length;
+  while(i--) {
+    if (this.states[i].namespace == namespace) {
+      this.states.splice(i, 1);
+      if (i <= this.currentState)
         this.currentState--
     }
-  });
+  }
 }
 
 stateQueue.prototype.removeID = function (id) {
-  this.states.forEach(function (theState, theIndex, theArray) {
-    if (theState.id == id) {
-      theArray.splice(theIndex, 1);
-      if (theIndex <= this.currentState)
-        this.currentState--
+  var i = this.states.length;
+  while(i--) {
+    if (this.states[i].stateID == id) {
+      this.states.splice(i, 1);
+      if (i <= this.currentState)
+        this.currentState--;
     }
-  });
+  }
 }
 
 stateQueue.prototype.nextState = function() {
@@ -239,7 +241,7 @@ app.post('/api/v1/removenamespace', function(req, res) {
 });
 
 app.post('/api/v1/removeid', function(req, res) {
-  myStateQueue.removeID(req.body.id);
+  myStateQueue.removeID(req.body.stateID);
   res.sendJSON({'status': 'ok'});
 });
 
