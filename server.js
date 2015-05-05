@@ -6,6 +6,7 @@ var width = 96,
     timeCanvas = undefined;
 
 var express = require('express.io'),
+    http = require('http'),
     app = express(),
     bodyParser = require('body-parser'),
     Canvas = require('canvas'),
@@ -13,6 +14,11 @@ var express = require('express.io'),
     path = require('path'),
     board = require('rpi-rgb-led-matrix'),
     moment = require('moment');
+
+var options = {
+  host: 'busbus-dev.spaceboats.net',
+  path: '/arrivals?stop.id=15TH_SPAHR_WB&start_time=1430751600&end_time=1430752200&provider.id=6181e04e3c26ace60a8e709175c96298d8e5ef08'
+};
 
 var myStateQueue = new stateQueue();
 
@@ -39,6 +45,14 @@ function renderTimeCanvas() {
   var now = moment();
   timeCanvas = renderText(now.format('HH:mm'));
   setTimeout(renderTimeCanvas, moment().add(1, 'minute').startOf('minute') - moment() + 100);
+}
+
+function drawDateAndTime() {
+  var canvas = new Canvas(width, height);
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(dateCanvas, 0, 0);
+  ctx.drawImage(timeCanvas, width - timeCanvas.width, 0);
+  board.drawCanvas(ctx, width, height);
 }
 
 function state(obj) {
@@ -178,6 +192,7 @@ stateQueue.prototype.nextState = function() {
     }, this.states[this.currentState].duration);
   } else {
     board.fill(0, 0, 0);
+    drawDateAndTime();
     this.running = false;
   }
 }
@@ -252,6 +267,24 @@ board.start(height, numBoards);
 renderDateCanvas();
 renderTimeCanvas();
 
+drawDateAndTime();
+
 console.log("ready");
+
+callback = function(response) {
+  var str = '';
+
+  //another chunk of data has been recieved, so append it to `str`
+    response.on('data', function (chunk) {
+      str += chunk;
+    });
+
+  //the whole response has been recieved, so we just print it out here
+  response.on('end', function () {
+    console.log(str);
+  });
+}
+
+http.request(options, callback).end();
 
 app.listen(80);
