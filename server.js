@@ -1,6 +1,7 @@
 var width = 96,
     height = 16,
     numBoards = 3,
+    characterLimit = 100,
     defaultDuration = 5000,
     dateCanvas = undefined,
     timeCanvas = undefined;
@@ -66,6 +67,7 @@ function state(obj) {
 
 function textstate(obj) {
   if (obj.text === undefined) throw new Error("Mising text property");
+  if (obj.text.length > characterLimit) throw new Error("Text must be shorter than " + characterLimit);
   this.namespace = obj.namespace;
   this.type = obj.type;
   this.stateID = obj.stateID;
